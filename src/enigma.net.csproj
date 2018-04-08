@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>enigma.net</PackageId>
+    <Version>0.0.1</Version>
+    <Company>q2g</Company>
+    <Product>enigma.net</Product>
+    <Authors>Konrad Mattheis &amp; Martin Berthold</Authors>
+    <PackageProjectUrl>https://github.com/q2g/enigma.net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/q2g/enigma.net</RepositoryUrl>
+    <AssemblyName>enigma.net</AssemblyName>
+    <RootNamespace>enigma</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
+  </ItemGroup>
+
+</Project>
