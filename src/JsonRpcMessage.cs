@@ -52,6 +52,7 @@
     {
         #region Properties
         [JsonProperty("jsonrpc")]
+        [DefaultValue("2.0")]
         public string JsonRpcVersion { get; set; }
 
         [JsonProperty("result")]

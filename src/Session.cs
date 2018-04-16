@@ -14,28 +14,31 @@
 
     public class Session
     {
-        ConcurrentDictionary<int, WeakReference<GeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<GeneratedAPI>>();
+        internal ConcurrentDictionary<int, WeakReference<GeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<GeneratedAPI>>();
         ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
-        JsonRpcHandler rpc;
+
         ClientWebSocket socket = null;
 
         public Session()
         {
             socket = new ClientWebSocket();
             socket.Options.KeepAliveInterval = TimeSpan.FromMilliseconds(500);
-
-            socket.ConnectAsync(new Uri("ws://127.0.0.1:4848/app/engineData/"), CancellationToken.None).Wait();
-            
-            var ct = new CancellationToken();
-            this.ReceiveLoopAsync(ct);
         }
 
         #region Public
         public async Task<dynamic> OpenAsync()
         {
-            await new Task<dynamic>(() => { return null; });
-
-            return null;
+        
+            return await socket.ConnectAsync(new Uri("ws://127.0.0.1:4848/app/engineData/"), CancellationToken.None)
+                .ContinueWith((res) =>
+                {
+                    var ct = new CancellationToken();
+                    this.ReceiveLoopAsync(ct);
+                    var global = new GeneratedAPI("Global", "Global", "Global", this, -1);
+                    
+                    GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));                    
+                    return global;
+                });                    
         }
 
         public async Task CloseAsync()
@@ -51,20 +54,32 @@
         public async Task ResumedAsync(bool onlyIfAttached = false)
         {
             await new Task(() => { throw new NotSupportedException(); });
-        } 
+        }
         #endregion
+
+        private int requestID=0;
+        
+
 
         internal async Task<JToken> SendAsync(JsonRpcRequestMessage request,  CancellationToken ct)
         {
-
+            var sendID = Interlocked.Increment(ref requestID); ;
             var tcs = new TaskCompletionSource<JToken>();
+            request.Id = sendID;
             OpenRequests.TryAdd(request.Id, tcs);
-            var json = JsonConvert.SerializeObject(request);            
-            var bt = Encoding.UTF8.GetBytes(json);
+            string json = "";
+            try {
+              json = JsonConvert.SerializeObject(request);        
+            }
+            catch(Exception ex)
+            {
+
+            }
+            Console.WriteLine("Send Request " + json);
+                var bt = Encoding.UTF8.GetBytes(json);
             socket.SendAsync(bt, WebSocketMessageType.Text, true, ct);
 
             return await tcs.Task;            
-
         }
 
         private int initialRecieveBufferSize = 4096*8;
@@ -110,13 +125,13 @@
 
                         tcs?.SetResult(message.Result);
 
-                        if (message.Change != null)
+                        if (message?.Change != null)
                         {
                             foreach (var item in message.Change)
                             {
                                 GeneratedApiObjects.TryGetValue(item, out var wkValues);
                                 wkValues.TryGetTarget(out var generatedAPI);
-                                generatedAPI.OnChanged();
+                                generatedAPI?.OnChanged();
                             }
                         }
                     }

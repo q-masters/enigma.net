@@ -7,6 +7,8 @@ using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using ImpromptuInterface;
+using Dynamitey;
 
 namespace enigma
 {
@@ -50,23 +52,104 @@ namespace enigma
         //}
     }
 
+
+    public interface IGlobal: IGeneratedAP
+    {
+        Task<JToken> IsDesktopMode();
+        Task<IApp> OpenDoc(string json);
+    }
+
+    public interface IApp: IGeneratedAP
+    {
+        Task<JToken> GetScript();
+    }
+
+
     class Program
     {
         static void Main(string[] args)
         {
             //  Main2(null);
-
+          
             var session = new Session();
-            var ssd = new JsonRpcGeneratedAPIRequestMessage();
-            ssd.Delta = false;
-            ssd.Handle = -1;
-            ssd.Method = "EngineVersion";
-            ssd.Id = 1;
-            ssd.Parameters = JToken.Parse("{}");
-            session.SendAsync(ssd, CancellationToken.None).ContinueWith((res) =>
-            {
-                Console.WriteLine("RESULT: " + res.Result.ToString());
-            });
+
+            var globalTask = session.OpenAsync();
+            globalTask.Wait();
+
+            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+
+
+            var IsDesktopModeTask = global.IsDesktopMode();        
+            IsDesktopModeTask.Wait();
+            Console.WriteLine("Result: " + IsDesktopModeTask.Result.ToString());
+
+            global.OpenDoc(@"{ 'qDocName' : 'C:\\Users\\KMattheis\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf' }")
+                    .ContinueWith((newApp) =>
+                    {
+                        Console.WriteLine("Object " + (newApp.Result).ToString());
+                        // IApp app = Impromptu.ActLike<IApp>(newApp.Result);
+                        newApp.Result.GetScript()
+                            .ContinueWith((script) =>
+                            {
+                                Console.WriteLine("Script" + script.Result.ToString());
+                            });
+
+                    });
+
+            //   var isDesktop = (string)global.Result.IsDesktopMode();
+
+            //isDesktop.input.Wait();
+
+            //var tt = isDesktop as string;
+            //Console.WriteLine("Result: " + isDesktop.input.Result.ToString());
+
+
+            //.ContinueWith((globalTR) =>
+            //{
+            //    //.ContinueWith(
+            //    //    (result) => {
+            //    //    Console.WriteLine("Engine VErsion: " + result.Result.ToString());
+            //    //}
+            //    //;
+
+            //    try
+            //    {
+            //        var mm = globalTR.Result.IsDesktopMode();
+
+
+            //        var bn = mm as Task<JToken>;
+            //        Console.WriteLine(bn);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine("ex #######", ex.ToString());
+
+            //    }
+
+
+            //    //bn.ContinueWith((result) => {
+            //    // Console.WriteLine("IsDesktop: "+ result.Result.ToString());
+            //    //}
+            //    //);
+
+            //   
+            //});
+
+
+
+            //.ContinueWith((evTR) =>
+            //{
+            //    Console.WriteLine("reachedn");
+
+            //    Console.WriteLine(evTR.Result);
+            //});
+
+
+
+            //session.SendAsync(ssd, CancellationToken.None).ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("RESULT: " + res.Result.ToString());
+            //});
 
             Thread.Sleep(3000);
 
@@ -82,13 +165,10 @@ namespace enigma
             var mk = "{ type: 'qBarchart' }";
             var tn2 = JToken.Parse(mk);
 
-
-           
-
-          
-
-            tn.GetOpenDoc(tn2);
-            tn.GetOpenDoc(mk);
+                
+            //tn.GetOpenDoc(tn2);
+            //tn.GetOpenDoc(mk);       
+            //tn.GetOpenDoc(mk);
             Console.ReadLine();
         }
 
