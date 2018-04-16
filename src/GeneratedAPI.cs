@@ -55,15 +55,18 @@
 
     public interface IGeneratedAP
     {
-        string Id;
+        string Id { get; }
 
-        string Type;
+        string Type { get; }
 
-        string GenericType;
+        string GenericType { get; }
 
         //public Session Session;
 
-        int Handle;
+        int Handle { get; }
+
+        event EventHandler Changed;
+        event EventHandler Closed;
     }
 
     #region GeneratedAPI
@@ -88,12 +91,12 @@
 
         internal void OnChanged()
         {
-            Changed?.BeginInvoke(this, new EventArgs(), null, null);
+            Changed?.Invoke(this, new EventArgs());
         }
 
         internal void OnClosed()
         {
-            Closed?.BeginInvoke(this, new EventArgs(), null, null);
+            Closed?.Invoke(this, new EventArgs());
         }
         #endregion
 

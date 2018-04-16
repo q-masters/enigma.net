@@ -56,12 +56,15 @@ namespace enigma
     public interface IGlobal: IGeneratedAP
     {
         Task<JToken> IsDesktopMode();
-        Task<IApp> OpenDoc(string json);
+        Task<dynamic> OpenDoc(string json);
     }
 
     public interface IApp: IGeneratedAP
     {
         Task<JToken> GetScript();
+        Task<JToken> SetScript(string json);
+
+
     }
 
 
@@ -87,12 +90,17 @@ namespace enigma
                     .ContinueWith((newApp) =>
                     {
                         Console.WriteLine("Object " + (newApp.Result).ToString());
-                        // IApp app = Impromptu.ActLike<IApp>(newApp.Result);
-                        newApp.Result.GetScript()
+                                              
+                        IApp app = Impromptu.ActLike<IApp>(newApp.Result);
+
+                        app.Changed += App_Changed;
+                        app.GetScript()
                             .ContinueWith((script) =>
                             {
-                                Console.WriteLine("Script" + script.Result.ToString());
+                                Console.WriteLine("Script" + script.Result.ToString().Substring(1,100));
                             });
+
+                        app.SetScript(@"{qScript:'HALLO'}");
 
                     });
 
@@ -172,6 +180,11 @@ namespace enigma
             Console.ReadLine();
         }
 
+        private static void App_Changed(object sender, EventArgs e)
+        {
+            Console.WriteLine("************* APP CHANGES *****************************");
+        }
+
         //static async void Main2(string[] args)
         //{
         //    //using (var cts = new CancellationTokenSource())
@@ -192,6 +205,6 @@ namespace enigma
         //    //Console.WriteLine("teste"+ socket.State);
         //}
 
-        
+
     }
 }
