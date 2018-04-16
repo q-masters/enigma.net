@@ -14,7 +14,7 @@
 
     public class Session
     {
-        internal ConcurrentDictionary<int, WeakReference<GeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<GeneratedAPI>>();
+        internal ConcurrentDictionary<int, WeakReference<IGeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<IGeneratedAPI>>();
         ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
 
         ClientWebSocket socket = null;
@@ -36,7 +36,7 @@
                     this.ReceiveLoopAsync(ct);
                     var global = new GeneratedAPI("Global", "Global", "Global", this, -1);
                     
-                    GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));                    
+                    GeneratedApiObjects.TryAdd(-1, new WeakReference<IGeneratedAPI>(global));                    
                     return global;
                 });                    
         }

@@ -10,8 +10,6 @@
     using Newtonsoft.Json.Linq;
     #endregion
 
-    
-
     public class GeneratedAPIResult : DynamicObject
     {
         private Task<JToken> input = null;
@@ -26,9 +24,15 @@
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            if (binder.ReturnType == typeof(Task<dynamic>))
+            var gArgs = binder.ReturnType.GetGenericArguments();
+
+          //  if (typeof(IGeneratedAPI).IsAssignableFrom(gArgs[0]))
+            if (! typeof(JToken).IsAssignableFrom(gArgs[0]))
             {
-                var tcs = new TaskCompletionSource<dynamic>();
+                Type gTCS = typeof(TaskCompletionSource<>).MakeGenericType(gArgs);
+                object tcsO = Activator.CreateInstance(gTCS);
+
+                var SetResult = gTCS.GetMethod("SetResult");
 
                 input.ContinueWith((message) => {
                     var qReturn = message?.Result?.SelectToken("qReturn");
@@ -37,23 +41,32 @@
                         int handle = int.Parse(qReturn["qHandle"].ToString());
                         Console.WriteLine($"new OBJECT handle: {handle}");
                         var newObj = new GeneratedAPI(qReturn["qGenericId"].ToString(), "", "", session, handle);
-                        session.GeneratedApiObjects.TryAdd(handle, new WeakReference<GeneratedAPI>(newObj));
-                        tcs?.SetResult(newObj);
+                        IGeneratedAPI ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);                   
+                        session.GeneratedApiObjects.TryAdd(handle, new WeakReference<IGeneratedAPI>(ia));
+                        //tcs.SetResult(ia);
+                        SetResult.Invoke(tcsO, new object[] { ia });
+                    }
+                    else
+                    {
+                        object newRes = message?.Result?.SelectToken("qVersion");
+                        SetResult.Invoke(tcsO, new object[] { newRes });
                     }
                 }
                 );
 
-                result= tcs.Task;
+                var getTask = gTCS.GetProperty("Task");
+                result = getTask.GetValue(tcsO);
                 return true;
             }
 
             result = input;
-            return true;   
+            return true;
+
         }
 
     }
 
-    public interface IGeneratedAP
+    public interface IGeneratedAPI
     {
         string Id { get; }
 
@@ -67,10 +80,12 @@
 
         event EventHandler Changed;
         event EventHandler Closed;
+
+        void OnChanged();
     }
 
     #region GeneratedAPI
-    public class GeneratedAPI : DynamicObject, IGeneratedAP
+    public class GeneratedAPI : DynamicObject, IGeneratedAPI
     {
         #region Variables & Properties
         public string Id { get; private set; }
@@ -89,12 +104,12 @@
 
         public event EventHandler Closed;
 
-        internal void OnChanged()
+        public void OnChanged()
         {
             Changed?.Invoke(this, new EventArgs());
         }
 
-        internal void OnClosed()
+        public void OnClosed()
         {
             Closed?.Invoke(this, new EventArgs());
         }
@@ -158,8 +173,7 @@
                 }
             }
 
-            var request = new JsonRpcGeneratedAPIRequestMessage();
-            request.Id = 7;
+            var request = new JsonRpcGeneratedAPIRequestMessage();         
             request.Handle = this.Handle;            
             request.Method = binder.Name;
             if (request.Method.EndsWith("Async"))

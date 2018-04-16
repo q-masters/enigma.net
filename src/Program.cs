@@ -53,18 +53,16 @@ namespace enigma
     }
 
 
-    public interface IGlobal: IGeneratedAP
+    public interface IGlobal: IGeneratedAPI
     {
         Task<JToken> IsDesktopMode();
-        Task<dynamic> OpenDoc(string json);
+        Task<IApp> OpenDoc(string json);
     }
 
-    public interface IApp: IGeneratedAP
+    public interface IApp: IGeneratedAPI
     {
         Task<JToken> GetScript();
         Task<JToken> SetScript(string json);
-
-
     }
 
 
@@ -79,8 +77,18 @@ namespace enigma
             var globalTask = session.OpenAsync();
             globalTask.Wait();
 
-            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+            dynamic globalDyn = (GeneratedAPI)globalTask.Result;
 
+           // var ev = ;
+            ((Task<dynamic>)globalDyn.EngineVersion())
+            .ContinueWith((res) => {
+                    Console.WriteLine("EngineVER: " + res.Result.qComponentVersion.ToString());
+                });
+
+            
+
+
+            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
 
             var IsDesktopModeTask = global.IsDesktopMode();        
             IsDesktopModeTask.Wait();
@@ -90,8 +98,8 @@ namespace enigma
                     .ContinueWith((newApp) =>
                     {
                         Console.WriteLine("Object " + (newApp.Result).ToString());
-                                              
-                        IApp app = Impromptu.ActLike<IApp>(newApp.Result);
+
+                        var app = newApp.Result; //Impromptu.ActLike<IApp>(newApp.Result);
 
                         app.Changed += App_Changed;
                         app.GetScript()
@@ -104,79 +112,10 @@ namespace enigma
 
                     });
 
-            //   var isDesktop = (string)global.Result.IsDesktopMode();
 
-            //isDesktop.input.Wait();
-
-            //var tt = isDesktop as string;
-            //Console.WriteLine("Result: " + isDesktop.input.Result.ToString());
-
-
-            //.ContinueWith((globalTR) =>
-            //{
-            //    //.ContinueWith(
-            //    //    (result) => {
-            //    //    Console.WriteLine("Engine VErsion: " + result.Result.ToString());
-            //    //}
-            //    //;
-
-            //    try
-            //    {
-            //        var mm = globalTR.Result.IsDesktopMode();
-
-
-            //        var bn = mm as Task<JToken>;
-            //        Console.WriteLine(bn);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Console.WriteLine("ex #######", ex.ToString());
-
-            //    }
-
-
-            //    //bn.ContinueWith((result) => {
-            //    // Console.WriteLine("IsDesktop: "+ result.Result.ToString());
-            //    //}
-            //    //);
-
-            //   
-            //});
-
-
-
-            //.ContinueWith((evTR) =>
-            //{
-            //    Console.WriteLine("reachedn");
-
-            //    Console.WriteLine(evTR.Result);
-            //});
-
-
-
-            //session.SendAsync(ssd, CancellationToken.None).ContinueWith((res) =>
-            //{
-            //    Console.WriteLine("RESULT: " + res.Result.ToString());
-            //});
 
             Thread.Sleep(3000);
-
-            //Enigma.Create(new EnigmaConfigurations())
-            //    .OpenAsync()
-            //    .ContinueWith((global) =>
-            //    {
-            //        return (global.Result.test) as Task<bool>;
-            //    });              
-
-
-            var tn = new GeneratedAPI("", "", "", null, -1) as dynamic;
-            var mk = "{ type: 'qBarchart' }";
-            var tn2 = JToken.Parse(mk);
-
-                
-            //tn.GetOpenDoc(tn2);
-            //tn.GetOpenDoc(mk);       
-            //tn.GetOpenDoc(mk);
+         
             Console.ReadLine();
         }
 
@@ -185,26 +124,7 @@ namespace enigma
             Console.WriteLine("************* APP CHANGES *****************************");
         }
 
-        //static async void Main2(string[] args)
-        //{
-        //    //using (var cts = new CancellationTokenSource())
-        //    //using (var client = new WebSocketTextClient(cts.Token))
-        //    //{
-        //    //    client.MessageReceived += (sender, eventArgs) => Console.WriteLine(eventArgs.Message);
-
-        //    //    await client.ConnectAsync(new Uri("ws://127.0.0.1:4848/app/engineData"));
-        //    //    await client.SendAsync("ping");
-        //    //    await Task.Delay(5000);
-        //    //}
-        //    //var tt2 = new JsonRpc(new WebSocketMessageHandler())
-
-        //    //ClientWebSocket socket = new ClientWebSocket();
-        //    //var socket2 = socket.ConnectAsync(new Uri("wss://nb-fc-t460s-04:443/app/engineData/"), new System.Threading.CancellationToken());
-        //    //socket2.Wait();     
-
-        //    //Console.WriteLine("teste"+ socket.State);
-        //}
-
+     
 
     }
 }
