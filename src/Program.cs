@@ -52,11 +52,16 @@ namespace enigma
         //}
     }
 
+    public class NxEngineVersion
+    {
+        public string qComponentVersion { get; set; }
+    }
 
     public interface IGlobal: IGeneratedAPI
     {
         Task<JToken> IsDesktopMode();
         Task<IApp> OpenDoc(string json);
+        Task<NxEngineVersion> EngineVersion();
     }
 
     public interface IApp: IGeneratedAPI
@@ -78,21 +83,23 @@ namespace enigma
             globalTask.Wait();
 
             dynamic globalDyn = (GeneratedAPI)globalTask.Result;
-
-           // var ev = ;
+           
             ((Task<dynamic>)globalDyn.EngineVersion())
             .ContinueWith((res) => {
                     Console.WriteLine("EngineVER: " + res.Result.qComponentVersion.ToString());
-                });
-
-            
-
+                });          
 
             IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
 
             var IsDesktopModeTask = global.IsDesktopMode();        
             IsDesktopModeTask.Wait();
             Console.WriteLine("Result: " + IsDesktopModeTask.Result.ToString());
+
+            global.EngineVersion()
+                .ContinueWith((engVer) =>
+                {
+                    Console.WriteLine(engVer.Result.qComponentVersion);
+                });
 
             global.OpenDoc(@"{ 'qDocName' : 'C:\\Users\\KMattheis\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf' }")
                     .ContinueWith((newApp) =>

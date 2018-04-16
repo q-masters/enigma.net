@@ -48,8 +48,15 @@
                     }
                     else
                     {
-                        object newRes = message?.Result?.SelectToken("qVersion");
-                        SetResult.Invoke(tcsO, new object[] { newRes });
+                        try
+                        {
+                            object newRes = message?.Result?.SelectToken("qVersion").ToObject(gArgs[0]);
+                            SetResult.Invoke(tcsO, new object[] { newRes });
+                        }
+                        catch(Exception ex)
+                        {
+
+                        }
                     }
                 }
                 );
