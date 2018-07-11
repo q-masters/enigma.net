@@ -10,11 +10,12 @@
     using System.Threading.Tasks;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using Qlik.EngineAPI;
     #endregion
 
     public class Session
     {
-        internal ConcurrentDictionary<int, WeakReference<IGeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<IGeneratedAPI>>();
+        internal ConcurrentDictionary<int, WeakReference<IObjectInterface>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<IObjectInterface>>();
         ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
 
         ClientWebSocket socket = null;
@@ -36,7 +37,7 @@
                     this.ReceiveLoopAsync(ct);
                     var global = new GeneratedAPI("Global", "Global", "Global", this, -1);
                     
-                    GeneratedApiObjects.TryAdd(-1, new WeakReference<IGeneratedAPI>(global));                    
+                    GeneratedApiObjects.TryAdd(-1, new WeakReference<IObjectInterface>(global));                    
                     return global;
                 });                    
         }

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿#region Usings
 using System;
 using System.Net;
 using System.Net.Security;
@@ -7,39 +6,44 @@ using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using ImpromptuInterface;
 using Dynamitey;
+using ImpromptuInterface;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Qlik.EngineAPI;
 
-namespace enigma
-{
-    public static class TaskThenExtensionMethods { 
-    
-    //    public static async Task Then(this Task antecedent, Action continuation)
-    //    {
-    //        await antecedent;
-    //        continuation();
-    //    }
+#endregion
 
-    //    public static async Task<TNewResult> Then<TNewResult>(this Task antecedent, Func<TNewResult> continuation)
-    //    {
-    //        await antecedent;
-    //        return continuation();
-    //    }
+namespace enigma {
+    #region ToDos
+    public static class TaskThenExtensionMethods {
 
-    //    public static async Task Then<TResult>(this Task<TResult> antecedent, Action<TResult> continuation)
-    //    {
-    //        continuation(await antecedent);
-    //    }
+        //    public static async Task Then(this Task antecedent, Action continuation)
+        //    {
+        //        await antecedent;
+        //        continuation();
+        //    }
 
-    //    public static async Task<TNewResult> Then<TResult, TNewResult>(this Task<TResult> antecedent, Func<TResult, TNewResult> continuation)
-    //    {
-    //        return continuation(await antecedent);
-    //    }
+        //    public static async Task<TNewResult> Then<TNewResult>(this Task antecedent, Func<TNewResult> continuation)
+        //    {
+        //        await antecedent;
+        //        return continuation();
+        //    }
 
-           //public static Task Unwarp(this dynamic tt)
-           // {
-           //     return 
-           // }
+        //    public static async Task Then<TResult>(this Task<TResult> antecedent, Action<TResult> continuation)
+        //    {
+        //        continuation(await antecedent);
+        //    }
+
+        //    public static async Task<TNewResult> Then<TResult, TNewResult>(this Task<TResult> antecedent, Func<TResult, TNewResult> continuation)
+        //    {
+        //        return continuation(await antecedent);
+        //    }
+
+        //public static Task Unwarp(this dynamic tt)
+        // {
+        //     return 
+        // }
 
         //public static Task Then<TResult>(this Task<TResult> @this, Func<TResult, Task> continuation)
         //{
@@ -48,90 +52,70 @@ namespace enigma
         //    {
         //        await continuation.Invoke(@this.Result);
         //    });
-            
+
         //}
     }
+    #endregion
 
-    public class NxEngineVersion
-    {
-        public string qComponentVersion { get; set; }
-    }
+    class Program {
+        static void Main (string[] args) {
+            var session = new Session ();
+            
+            var globalTask = session.OpenAsync ();
+            globalTask.Wait ();
 
-    public interface IGlobal: IGeneratedAPI
-    {
-        Task<JToken> IsDesktopMode();
-        Task<IApp> OpenDoc(string json);
-        Task<NxEngineVersion> EngineVersion();
-    }
+            dynamic globalDyn = (GeneratedAPI) globalTask.Result;
 
-    public interface IApp: IGeneratedAPI
-    {
-        Task<JToken> GetScript();
-        Task<JToken> SetScript(string json);
-    }
+            ((Task<dynamic>) globalDyn.EngineVersion())
+            .ContinueWith ((res) => {
+                Console.WriteLine ("EngineVER: " + res.Result.qComponentVersion.ToString ());
+            });
+
+            IGlobal global = Impromptu.ActLike<IGlobal> (globalTask.Result);
 
 
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            //  Main2(null);
-          
-            var session = new Session();
+            global.EngineVersionAsync()
+                .ContinueWith ((engVer) => {
+                    Console.WriteLine ("CastedEngineVer:"+ engVer.Result.qComponentVersion);
+                });
+            
 
-            var globalTask = session.OpenAsync();
-            globalTask.Wait();
 
-            dynamic globalDyn = (GeneratedAPI)globalTask.Result;
-           
-            ((Task<dynamic>)globalDyn.EngineVersion())
-            .ContinueWith((res) => {
-                    Console.WriteLine("EngineVER: " + res.Result.qComponentVersion.ToString());
-                });          
+            CancellationToken ct = new CancellationToken();
+            
 
-            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+            global.OpenDocAsync (@"C:\\Users\\KMattheis\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf", token: ct)
+                .ContinueWith ((newApp) => {
+                    
+                    Console.WriteLine ("Object " + (newApp.Result).ToString ());
 
-            var IsDesktopModeTask = global.IsDesktopMode();        
-            IsDesktopModeTask.Wait();
-            Console.WriteLine("Result: " + IsDesktopModeTask.Result.ToString());
+                    var app = newApp.Result;
 
-            global.EngineVersion()
-                .ContinueWith((engVer) =>
-                {
-                    Console.WriteLine(engVer.Result.qComponentVersion);
+                    app.Changed += App_Changed;
+                    app.GetScriptAsync ()
+                        .ContinueWith ((script) => {
+                            Console.WriteLine ("Script" + script.Result.ToString ().Substring (1, 100));
+                        });
+
+                    app.SetScriptAsync(@"{qScript:'HALLO'}")
+                        .ContinueWith((res) =>
+                        {
+                            app.GetScriptAsync()
+                                .ContinueWith((script) => {
+                                    Console.WriteLine("Script2" + script.Result.ToString().Substring(1, 100));
+                                });
+                        });
+
                 });
 
-            global.OpenDoc(@"{ 'qDocName' : 'C:\\Users\\KMattheis\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf' }")
-                    .ContinueWith((newApp) =>
-                    {
-                        Console.WriteLine("Object " + (newApp.Result).ToString());
+            Thread.Sleep (3000);
 
-                        var app = newApp.Result; //Impromptu.ActLike<IApp>(newApp.Result);
-
-                        app.Changed += App_Changed;
-                        app.GetScript()
-                            .ContinueWith((script) =>
-                            {
-                                Console.WriteLine("Script" + script.Result.ToString().Substring(1,100));
-                            });
-
-                        app.SetScript(@"{qScript:'HALLO'}");
-
-                    });
-
-
-
-            Thread.Sleep(3000);
-         
-            Console.ReadLine();
+            Console.ReadLine ();
         }
 
-        private static void App_Changed(object sender, EventArgs e)
-        {
-            Console.WriteLine("************* APP CHANGES *****************************");
+        private static void App_Changed (object sender, EventArgs e) {
+            Console.WriteLine ("************* APP CHANGES *****************************");
         }
-
-     
 
     }
 }

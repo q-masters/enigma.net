@@ -7,8 +7,18 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Newtonsoft.Json.Linq;
+    using System.Linq;
+    using Newtonsoft.Json.Linq;    
+    using Qlik.EngineAPI;
     #endregion
+
+    public class ObjectInterface
+    {
+        public string qType { get; set; }
+        public int qHandle { get; set; }
+        public string qGenericType { get; set; }
+        public string qGenericId { get; set; }
+    }
 
     public class GeneratedAPIResult : DynamicObject
     {
@@ -27,9 +37,14 @@
             var gArgs = binder.ReturnType.GetGenericArguments();
 
           //  if (typeof(IGeneratedAPI).IsAssignableFrom(gArgs[0]))
-            if (! typeof(JToken).IsAssignableFrom(gArgs[0]))
+            if (gArgs.Length == 0 || !typeof(JToken).IsAssignableFrom(gArgs[0]))
             {
-                Type gTCS = typeof(TaskCompletionSource<>).MakeGenericType(gArgs);
+                Type gTCS;
+                if (gArgs.Length == 0)
+                    gTCS = typeof(TaskCompletionSource<>).MakeGenericType(typeof(object));
+                else
+                    gTCS = typeof(TaskCompletionSource<>).MakeGenericType(gArgs);
+
                 object tcsO = Activator.CreateInstance(gTCS);
 
                 var SetResult = gTCS.GetMethod("SetResult");
@@ -41,8 +56,8 @@
                         int handle = int.Parse(qReturn["qHandle"].ToString());
                         Console.WriteLine($"new OBJECT handle: {handle}");
                         var newObj = new GeneratedAPI(qReturn["qGenericId"].ToString(), "", "", session, handle);
-                        IGeneratedAPI ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);                   
-                        session.GeneratedApiObjects.TryAdd(handle, new WeakReference<IGeneratedAPI>(ia));
+                        IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);                   
+                        session.GeneratedApiObjects.TryAdd(handle, new WeakReference<IObjectInterface>(ia));
                         //tcs.SetResult(ia);
                         SetResult.Invoke(tcsO, new object[] { ia });
                     }
@@ -50,12 +65,12 @@
                     {
                         try
                         {
-                            object newRes = message?.Result?.SelectToken("qVersion").ToObject(gArgs[0]);
+                            object newRes = message?.Result?.SelectToken("qVersion")?.ToObject(gArgs[0]);
                             SetResult.Invoke(tcsO, new object[] { newRes });
                         }
                         catch(Exception ex)
                         {
-
+                            SetResult.Invoke(tcsO, new object[] { null });
                         }
                     }
                 }
@@ -73,37 +88,19 @@
 
     }
 
-    public interface IGeneratedAPI
-    {
-        string Id { get; }
-
-        string Type { get; }
-
-        string GenericType { get; }
-
-        //public Session Session;
-
-        int Handle { get; }
-
-        event EventHandler Changed;
-        event EventHandler Closed;
-
-        void OnChanged();
-    }
-
     #region GeneratedAPI
-    public class GeneratedAPI : DynamicObject, IGeneratedAPI
+    public class GeneratedAPI : DynamicObject, IObjectInterface
     {
         #region Variables & Properties
-        public string Id { get; private set; }
+        public string qGenericId { get;  set; }
 
-        public string Type { get; private set; }
+        public string qType { get;  set; }
 
-        public string GenericType { get; private set; }
+        public string qGenericType { get;  set; }
 
         public Session Session { get; private set; }
 
-        public int Handle { get; private set; }
+        public int qHandle { get;  set; }
         #endregion
 
         #region Events
@@ -126,11 +123,11 @@
         public GeneratedAPI(string Id, string Type, string GenericType, Session Session, int Handle)
         {
             // ToDo: check if all Parameters are okay?
-            this.Id = Id;
-            this.Type = Type;
-            this.GenericType = GenericType;
+            this.qGenericId = Id;
+            this.qType = Type;
+            this.qGenericType = GenericType;
             this.Session = Session;
-            this.Handle = Handle;
+            this.qHandle = Handle;
         }
         #endregion
 
@@ -148,41 +145,56 @@
                 return true;
             }
 
-            CancellationToken cts = CancellationToken.None;
+            var argList = args.ToList();
+            var ctsArg = argList.OfType<CancellationToken>().ToList();
+            CancellationToken cts= ctsArg.SingleOrDefault();
+
             JToken jToken = null;
 
-            // ToDo: enhance parametercheck for enigma Parametermode with loaded schema file
-            foreach (var item in args)
+            if (args.Length == 1 || (args.Length==2 && ctsArg.Count == 1))
             {
-                if (item is CancellationToken innerCTS)
+                // special case one real argument beside CancellationToken
+                // check for string or JToken
+
+                if (args[0] is JToken innerJToken)
                 {
-                    if (cts != CancellationToken.None)
-                        throw new Exception();
-
-                    cts = innerCTS;
-                }
-
-                if (item is JToken innerJToken)
-                {
-                    if (jToken != null)
-                        throw new Exception();
-
                     jToken = innerJToken;
                 }
-
-                if (item is string JTokenString)
+                if (args[0] is string innerString)
                 {
-                    // ToDo: if parameter mode is working Check for valid JToken and if not valid check if parameters mode function fits                    
-                    if (jToken != null)
-                        throw new Exception();
-
-                    jToken = JToken.Parse(JTokenString);
+                    try
+                    {
+                        jToken = JToken.Parse(innerString);
+                    }
+                    catch
+                    {
+                    }
                 }
             }
 
-            var request = new JsonRpcGeneratedAPIRequestMessage();         
-            request.Handle = this.Handle;            
-            request.Method = binder.Name;
+            if (jToken == null)
+            {
+                var jArray = new JArray();
+                foreach (var item in args)
+                {
+                    if (item == null)
+                        break;
+
+                    if (item is CancellationToken)
+                        continue;
+
+                    jArray.Add(item);
+                }
+                jToken = jArray;
+            }
+
+
+            // ToDo: enhance parametercheck for enigma Parametermode with loaded schema file                      
+            var request = new JsonRpcGeneratedAPIRequestMessage
+            {
+                Handle = this.qHandle,
+                Method = binder.Name
+            };
             if (request.Method.EndsWith("Async"))
                 request.Method=request.Method.Substring(0, request.Method.Length - 5);
 
