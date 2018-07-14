@@ -79,9 +79,8 @@ namespace enigma
 
                 Console.WriteLine("EngineVER: " + res.Result.qComponentVersion.ToString());
             });
-
-            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
-
+                        
+            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);            
             global.EngineVersionAsync()
                 .ContinueWith((engVer) => {
                     Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
