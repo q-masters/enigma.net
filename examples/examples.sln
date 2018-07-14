@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "enigma.net", "enigma.net.csproj", "{7180BFF9-C78B-4C72-9E60-D4D7116E2688}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "enigma.net", "..\src\enigma.net.csproj", "{7180BFF9-C78B-4C72-9E60-D4D7116E2688}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SenseDesktop", "..\SenseDesktop\SenseDesktop.csproj", "{4B8F6407-2C6F-45BA-9873-686BB71DB0D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SenseDesktop", "SenseDesktop\SenseDesktop.csproj", "{4B8F6407-2C6F-45BA-9873-686BB71DB0D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

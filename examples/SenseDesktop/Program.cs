@@ -63,7 +63,11 @@ namespace enigma
     {
         static void Main(string[] args)
         {
-            var session = new Session();
+            var config = new EnigmaConfigurations() {
+                Url = "ws://127.0.0.1:4848/app/engineData/"
+            };
+
+            var session = Enigma.Create(config);
 
             var globalTask = session.OpenAsync();
             globalTask.Wait();
@@ -83,10 +87,7 @@ namespace enigma
                     Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
                 });
 
-
-
             CancellationToken ct = new CancellationToken();
-
 
             global.OpenDocAsync(@"C:\\Users\\KMattheis\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf", token: ct)
                 .ContinueWith((newApp) => {
@@ -96,18 +97,18 @@ namespace enigma
                     var app = newApp.Result;
 
                     app.Changed += App_Changed;
-                    app.GetScriptAsync()
-                        .ContinueWith((script) => {
-                            Console.WriteLine("Script" + script.Result.ToString().Substring(1, 100));
-                        });
+                    //app.GetScriptAsync()
+                    //    .ContinueWith((script) => {
+                    //        Console.WriteLine("Script" + script.Result.ToString().Substring(1, 100));
+                    //    });
 
                     app.SetScriptAsync(@"{qScript:'HALLO'}")
                         .ContinueWith((res) =>
                         {
-                            app.GetScriptAsync()
-                                .ContinueWith((script) => {
-                                    Console.WriteLine("Script2" + script.Result.ToString().Substring(1, 100));
-                                });
+                            //app.GetScriptAsync()
+                            //    .ContinueWith((script) => {
+                            //        Console.WriteLine("Script2" + script.Result.ToString().Substring(1, 100));
+                            //    });
                         });
 
                 });
