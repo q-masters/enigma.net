@@ -122,9 +122,10 @@
                     logger.Error(ex);
                 }
                 logger.Trace("Send Request " + json);                
-                var bt = Encoding.UTF8.GetBytes(json);                
+                var bt = Encoding.UTF8.GetBytes(json);
+                ArraySegment<byte> nm = new ArraySegment<byte>(bt);
                 OpenRequests.TryAdd(request.Id, tcs);
-                _ = socket.SendAsync(bt, WebSocketMessageType.Text, true, ct)
+                _ = socket.SendAsync(nm, WebSocketMessageType.Text, true, ct)
                        .ContinueWith(
                             result =>
                             {
