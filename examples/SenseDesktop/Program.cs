@@ -23,8 +23,12 @@
     {
         #region nlog helper for netcore
         private static void SetLoggerSettings(string configName)
-        {
+        {            
+#if NET452
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configName);
+#else
             var path = Path.Combine(System.AppContext.BaseDirectory, configName);
+#endif
             if (!File.Exists(path))
             {
                 var root = new FileInfo(path).Directory?.Parent?.Parent?.Parent;
@@ -34,7 +38,7 @@
 
             LogManager.Configuration = new XmlLoggingConfiguration(path, false);
         } 
-        #endregion
+#endregion
 
         static void Main(string[] args)
         {

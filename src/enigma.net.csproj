@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>    
-    <TargetFramework>netcoreapp2.1</TargetFramework>    
+    <TargetFrameworks>net452;netcoreapp2.1;netcoreapp2.0</TargetFrameworks>    
     <PackageId>enigma.net</PackageId>    
     <Company>q2g</Company>
     <Product>enigma.net</Product>
