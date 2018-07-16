@@ -1,6 +1,6 @@
 ﻿namespace enigma
 {
-    internal interface IMixin
+    public interface IMixin
     {
     }
 }

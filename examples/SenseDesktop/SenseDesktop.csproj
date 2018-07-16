@@ -14,4 +14,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\enigma.net.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

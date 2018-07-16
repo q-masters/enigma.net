@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>    
     <TargetFramework>netcoreapp2.1</TargetFramework>    
-    <PackageId>enigma.net</PackageId>
-    <Version>0.0.1</Version>
+    <PackageId>enigma.net</PackageId>    
     <Company>q2g</Company>
     <Product>enigma.net</Product>
     <Authors>Konrad Mattheis &amp; Martin Berthold</Authors>
@@ -12,7 +11,7 @@
     <RootNamespace>enigma</RootNamespace>
 
     <Description>Automated Classes for the Qlik EngineAPI</Description>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <!--<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>-->
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageTags>qlik sense engine engineapi enigma</PackageTags>
 
@@ -48,16 +47,17 @@
     <Delete Files="$(PackageOutputAbsolutePath)\version.txt" />
   </Target>
 
-  <!--<Target Name="PublishToNugetWithAPIKey" AfterTargets="GenerateNuspec">
+  <Target Name="PublishToNugetWithAPIKey" AfterTargets="GenerateNuspec">
     <ReadLinesFromFile File="$(SolutionDir)\..\..\nugetapikey.txt">
       <Output TaskParameter="Lines" PropertyName="NugetAPIKey" />
     </ReadLinesFromFile>
     <Exec WorkingDirectory="$(BaseDir)" Command="dotnet nuget push $(PackageOutputAbsolutePath)$(PackageId).$(PackageVersion).nupkg -k $(NugetAPIKey) -s https://api.nuget.org/v3/index.json" />
-  </Target>-->  
+  </Target>  
 
   <ItemGroup>
     <PackageReference Include="ImpromptuInterface" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="NLog" Version="4.5.6" />
     <PackageReference Include="qlik-engineapi" Version="0.1.0-alpha0054" />
     <PackageReference Include="GitVersionTask" Version="4.0.0-beta0008">
       <PrivateAssets>All</PrivateAssets>

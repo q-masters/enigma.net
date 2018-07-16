@@ -10,109 +10,175 @@
     using System.Linq;
     using Newtonsoft.Json.Linq;    
     using Qlik.EngineAPI;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
     #endregion
 
-    public class ObjectInterface
+    #region ObjectResult
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    internal class ObjectResult
     {
-        public string qType { get; set; }
-        public int qHandle { get; set; }
-        public string qGenericType { get; set; }
-        public string qGenericId { get; set; }
-    }
+        [JsonProperty(Required = Required.Always)]
+        public string QType { get; set; }
 
+        [JsonProperty(Required = Required.Always)]
+        public int QHandle { get; set; }
+
+        public string QGenericType { get; set; } = "";
+        public string QGenericId { get; set; } = "";
+    } 
+    #endregion
+
+    #region GeneratedAPIResult
+    /// <summary>
+    /// Class to Handle the ondemand the result of methods calls of the GeneratedAPI Class
+    /// </summary>
     public class GeneratedAPIResult : DynamicObject
     {
+        #region Variables & Properties
         private Task<JToken> input = null;
 
         private Session session = null;
+        #endregion
 
+        #region Constructor
+        /// <summary>
+        /// Constructor of the GeneratedAPIResult
+        /// </summary>
+        /// <param name="input">The result of the engine method call as Task of a JSON Object</param>
+        /// <param name="session">The enigma session</param>
         public GeneratedAPIResult(Task<JToken> input, Session session)
         {
             this.input = input;
             this.session = session;
         }
+        #endregion
 
+        #region Dynamic Methods
+#pragma warning disable 1591 // no XML Comment Warning for override
         public override bool TryConvert(ConvertBinder binder, out object result)
-        {
-            var gArgs = binder.ReturnType.GetGenericArguments();
+        {            
+            Type gArgs = binder.ReturnType.GetGenericArguments().FirstOrDefault() ?? typeof(object);
 
-          //  if (typeof(IGeneratedAPI).IsAssignableFrom(gArgs[0]))
-            if (gArgs.Length == 0 || !typeof(JToken).IsAssignableFrom(gArgs[0]))
+            if (!typeof(JToken).IsAssignableFrom(gArgs))
             {
-                Type gTCS;
-                if (gArgs.Length == 0)
-                    gTCS = typeof(TaskCompletionSource<>).MakeGenericType(typeof(object));
-                else
-                    gTCS = typeof(TaskCompletionSource<>).MakeGenericType(gArgs);
+                var tcs = new TaskCompletionSource(gArgs);
 
-                object tcsO = Activator.CreateInstance(gTCS);
+                input.ContinueWith((message) =>
+                {
+                    if (message.IsCanceled)
+                        tcs.SetCanceled();
+                    if (message.IsFaulted)
+                        tcs.SetException(message.Exception);
 
-                var SetResult = gTCS.GetMethod("SetResult");
-
-                input.ContinueWith((message) => {
                     var qReturn = message?.Result?.SelectToken("qReturn");
                     if (qReturn != null && qReturn.Type == JTokenType.Object && qReturn["qHandle"] != null)
                     {
-                        int handle = int.Parse(qReturn["qHandle"].ToString());
-                        Console.WriteLine($"new OBJECT handle: {handle}");
-                        var newObj = new GeneratedAPI(qReturn["qGenericId"].ToString(), "", "", session, handle);
-                        IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);                   
-                        session.GeneratedApiObjects.TryAdd(handle, new WeakReference<IObjectInterface>(ia));
-                        //tcs.SetResult(ia);
-                        SetResult.Invoke(tcsO, new object[] { ia });
+                        var objectResult = qReturn.ToObject<ObjectResult>();
+                        var newObj = new GeneratedAPI(objectResult, session);
+                        session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
+                        IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
+                        tcs.SetResult(ia);
                     }
                     else
                     {
                         try
                         {
-                            object newRes = message?.Result?.SelectToken("qVersion")?.ToObject(gArgs[0]);
-                            SetResult.Invoke(tcsO, new object[] { newRes });
+                            object newRes = null;
+                            JToken resultToken = null;
+                            var results = message.Result.Children().ToList();
+                            if (results.Count == 1)
+                            {
+                                resultToken = results.FirstOrDefault().First();
+                            }
+                            else
+                            {
+                                resultToken = message.Result;
+                            }
+
+                            if (gArgs != typeof(object))
+                                newRes = resultToken.ToObject(gArgs);
+                            else
+                                newRes = resultToken;
+
+                            tcs.SetResult(newRes);
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
-                            SetResult.Invoke(tcsO, new object[] { null });
+                            tcs.SetException(ex);                            
                         }
                     }
                 }
                 );
 
-                var getTask = gTCS.GetProperty("Task");
-                result = getTask.GetValue(tcsO);
+                result = tcs.Task;
                 return true;
             }
 
             result = input;
             return true;
-
         }
+#pragma warning restore 1591
 
-    }
+        #endregion
+    } 
+    #endregion
 
     #region GeneratedAPI
+    /// <summary>
+    /// Generated API Object on the Engine side, tracked by qHandle
+    /// </summary>
     public class GeneratedAPI : DynamicObject, IObjectInterface
     {
         #region Variables & Properties
-        public string qGenericId { get;  set; }
+        /// <summary>
+        /// qGenericId of the engine object
+        /// </summary>
+        public string qGenericId { get; set; }
 
-        public string qType { get;  set; }
+        /// <summary>
+        /// qGenericType of the engine object
+        /// </summary>
+        public string qGenericType { get; set; }
 
-        public string qGenericType { get;  set; }
+        /// <summary>
+        /// qType of the engine object for exampe (Doc, GenericObject, GenericBookmark,...)
+        /// </summary>
+        public string qType { get; set; }
 
+        /// <summary>
+        /// qHandle of the engine object
+        /// </summary>
+        public int qHandle { get; set; }
+
+        /// <summary>
+        /// The current enigma Session for this Generated API Object
+        /// </summary>
         public Session Session { get; private set; }
-
-        public int qHandle { get;  set; }
         #endregion
 
         #region Events
+        /// <summary>
+        /// Changed Event that is called if the engines notify the change of the Generated Object
+        /// </summary>
         public event EventHandler Changed;
 
+        /// <summary>
+        /// Closed Event that is called if the engines notify the close of the Generated Object
+        /// </summary>
         public event EventHandler Closed;
 
+        /// <summary>
+        /// Trigger the Changed Event for this  Generated Object
+        /// </summary>
         public void OnChanged()
         {
             Changed?.Invoke(this, new EventArgs());
         }
 
+        /// <summary>
+        /// Trigger the Closed Event for this  Generated Object
+        /// </summary>
         public void OnClosed()
         {
             Closed?.Invoke(this, new EventArgs());
@@ -120,18 +186,23 @@
         #endregion
 
         #region Constructor
-        public GeneratedAPI(string Id, string Type, string GenericType, Session Session, int Handle)
+        /// <summary>
+        /// Construct GeneratedAPI Class 
+        /// </summary>
+        /// <param name="objectResult">The properties for this Generated API Object</param>
+        /// <param name="session">The current enigma Session for this Generated API Object</param>
+        internal GeneratedAPI(ObjectResult objectResult, Session session)
         {
-            // ToDo: check if all Parameters are okay?
-            this.qGenericId = Id;
-            this.qType = Type;
-            this.qGenericType = GenericType;
-            this.Session = Session;
-            this.qHandle = Handle;
-        }
+            this.qGenericId = objectResult.QGenericId;
+            this.qType = objectResult.QType;
+            this.qGenericId = objectResult.QGenericType;
+            this.qHandle = objectResult.QHandle;
+            this.Session = session;
+        }        
         #endregion
 
-        #region Dynamic Methods
+        #region Dynamic Methods        
+#pragma warning disable 1591 // no XML Comment Warning for override
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
             return base.TryConvert(binder, out result);
@@ -155,7 +226,6 @@
             {
                 // special case one real argument beside CancellationToken
                 // check for string or JToken
-
                 if (args[0] is JToken innerJToken)
                 {
                     jToken = innerJToken;
@@ -177,17 +247,18 @@
                 var jArray = new JArray();
                 foreach (var item in args)
                 {
-                    if (item == null)
-                        break;
-
                     if (item is CancellationToken)
                         continue;
+
+                    if (item == null)
+                        break;
+                    //    jArray.Add("");
+                    //else
 
                     jArray.Add(item);
                 }
                 jToken = jArray;
             }
-
 
             // ToDo: enhance parametercheck for enigma Parametermode with loaded schema file                      
             var request = new JsonRpcGeneratedAPIRequestMessage
@@ -198,13 +269,16 @@
             if (request.Method.EndsWith("Async"))
                 request.Method=request.Method.Substring(0, request.Method.Length - 5);
 
-            //if (Char.IsLower(request.Method[0]))
-            //    request.Method[0] = char.ToUpper(request.Method[0]);
+            if (Char.IsLower(request.Method[0]))
+            {
+                request.Method = char.ToUpper(request.Method[0])+ request.Method.Substring(1);
+            }
             request.Parameters = jToken ?? JToken.Parse("{}");
             result = new GeneratedAPIResult(Session?.SendAsync(request, cts), Session);
             return true;
         }
+#pragma warning restore  1591
         #endregion
-    } 
+    }
     #endregion
 }

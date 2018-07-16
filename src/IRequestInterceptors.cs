@@ -1,6 +1,6 @@
 ﻿namespace enigma
 {
-    internal interface IRequestInterceptors
+    public interface IRequestInterceptors
     {
     }
 }
