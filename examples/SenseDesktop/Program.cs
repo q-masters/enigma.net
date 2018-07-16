@@ -57,7 +57,6 @@
                 //}
             };
 
-
             var session = Enigma.Create(config);
 
             // connect to the engine
