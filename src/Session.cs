@@ -10,37 +10,49 @@
     using System.Threading.Tasks;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using NLog;
     using Qlik.EngineAPI;
     #endregion
 
+    #region Session
     /// <summary>
     /// Class for Enigma Sessions
     /// </summary>
     public class Session
     {
-        internal ConcurrentDictionary<int, WeakReference<IObjectInterface>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<IObjectInterface>>();
-        ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
+        #region Logger
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        #endregion
 
-        ClientWebSocket socket = null;
+        #region Variables / Properties
+        internal ConcurrentDictionary<int, WeakReference<GeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<GeneratedAPI>>();
+        private ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
 
-        EnigmaConfigurations config;
-        
+        private ClientWebSocket socket = null;
+
+        private EnigmaConfigurations config;
+
+        private int requestID = 0;
+        #endregion
+
+        #region Constructor
         /// <summary>
-        /// Constructor for a new 
+        /// Constructor for the Session Class
         /// </summary>
-        /// <param name="config"></param>
+        /// <param name="config">The enigma configuration</param>
         public Session(EnigmaConfigurations config)
         {
             this.config = config;
         }
+        #endregion
 
-        #region Public
+        #region Public Methods
         /// <summary>
         /// Establishes the websocket against the configured URL.
-        /// Eventually resolved with the QIX global interface when the connection has been established.
+        /// Try to get the QIX global interface when the connection has been established.
         /// </summary>
         /// <returns></returns>
-        public async Task<dynamic> OpenAsync(CancellationToken? ct= null)
+        public async Task<dynamic> OpenAsync(CancellationToken? ct = null)
         {
             CancellationToken ct2 = ct ?? CancellationToken.None;
             return await config.CreateSocketCall(ct2)
@@ -50,11 +62,11 @@
                     // Todo add here the global Cancelation Token that is
                     // triggered from the CloseAsync
                     this.ReceiveLoopAsync(ct2);
-                    var global = new GeneratedAPI("Global", "Global", "Global", this, -1);
 
-                    GeneratedApiObjects.TryAdd(-1, new WeakReference<IObjectInterface>(global));
+                    var global = new GeneratedAPI(new ObjectResult() { QHandle = -1, QType = "Global" }, this);
+                    GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));
                     return global;
-                });
+                }, continuationOptions: TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
         /// <summary>
@@ -92,38 +104,54 @@
         }
         #endregion
 
-        private int requestID=0;
-        
-        internal async Task<JToken> SendAsync(JsonRpcRequestMessage request,  CancellationToken ct)
+        #region SendAsync
+        internal async Task<JToken> SendAsync(JsonRpcRequestMessage request, CancellationToken ct)
         {
-            var sendID = Interlocked.Increment(ref requestID); ;
             var tcs = new TaskCompletionSource<JToken>();
-            request.Id = sendID;
-            OpenRequests.TryAdd(request.Id, tcs);
-            string json = "";
-            try {
-              json = JsonConvert.SerializeObject(request);        
-            }
-            catch(Exception ex)
+            try
             {
+                request.Id = Interlocked.Increment(ref requestID);
 
+                string json = "";
+                try
+                {
+                    json = JsonConvert.SerializeObject(request);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex);
+                }
+                logger.Trace("Send Request " + json);                
+                var bt = Encoding.UTF8.GetBytes(json);                
+                OpenRequests.TryAdd(request.Id, tcs);
+                _ = socket.SendAsync(bt, WebSocketMessageType.Text, true, ct)
+                       .ContinueWith(
+                            result =>
+                            {
+                                if (result.IsFaulted)
+                                    tcs.SetException(result.Exception);
+                                if (result.IsCanceled)
+                                    tcs.SetCanceled();
+                            })
+                            ;
             }
-            Console.WriteLine("Send Request " + json);
-                var bt = Encoding.UTF8.GetBytes(json);
-            socket.SendAsync(bt, WebSocketMessageType.Text, true, ct);
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);                
+            }
 
-            return await tcs.Task;            
+            return await tcs.Task;
         }
+        #endregion
 
-        private int initialRecieveBufferSize = 4096*8;        
-
-        private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
+        #region ReceiveLoopAsync
+        private async void ReceiveLoopAsync(CancellationToken cancellationToken)
         {
-            byte[] buffer = new byte[initialRecieveBufferSize];
+            byte[] buffer = new byte[4096 * 8];
 
             try
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     var writeSegment = new ArraySegment<byte>(buffer);
                     WebSocketReceiveResult result;
@@ -143,7 +171,7 @@
                     } while (!result.EndOfMessage);
 
                     var response = Encoding.UTF8.GetString(buffer, 0, writeSegment.Offset);
-                    Console.WriteLine(response);
+                    logger.Trace("Reponse" + response);                    
                     try
                     {
                         var message = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(response);
@@ -155,27 +183,40 @@
                         {
                             foreach (var item in message.Change)
                             {
+                                logger.Trace($"Object Id: {item} changed.");
                                 GeneratedApiObjects.TryGetValue(item, out var wkValues);
+                                if (wkValues != null)
+                                {
+                                    wkValues.TryGetTarget(out var generatedAPI);
+                                    generatedAPI?.OnChanged();
+                                }
+                            }
+                        }
+
+                        if (message?.Closed != null)
+                        {
+                            foreach (var item in message.Closed)
+                            {
+                                logger.Trace($"Object Id: {item} closed.");
+                                GeneratedApiObjects.TryRemove(item, out var wkValues);                                
                                 wkValues.TryGetTarget(out var generatedAPI);
-                                generatedAPI?.OnChanged();
+                                generatedAPI?.OnClosed();
                             }
                         }
                     }
 
                     catch (Exception ex)
                     {
-
+                        logger.Error(ex);
                     }
-
-                    //this.MessageReceived?.Invoke(this, new MessageReceivedEventArgs { Message = responce });
                 }
             }
             catch (Exception ex)
             {
-                //this.ErrorReceived?.Invoke(this, new SocketErrorEventArgs { Exception = ex });
+                logger.Error(ex);                
             }
         }
-
-
-    }
+        #endregion
+    } 
+    #endregion
 }

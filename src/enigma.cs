@@ -46,7 +46,7 @@
         /// <summary>
         /// A function to use when instantiating the WebSocket
         /// </summary>
-        Func<string, Task<ClientWebSocket>> CreateSocket { get; set; }
+        public Func<string, Task<ClientWebSocket>> CreateSocket { get; set; }
 
         ///// <summary>
         ///// Add later to enable Promise with then, instead of Tasks
@@ -64,26 +64,26 @@
         /// See Mixins section for more information how each entry in this array
         /// should look like. Mixins are applied in the array order.
         /// </summary>
-        List<IMixin> Mixins { get; set; }
+        public List<IMixin> Mixins { get; set; }
 
         /// <summary>
         /// Interceptors for augmenting requests before they are sent to QIX Engine.
         /// See Interceptors section for more information how each entry in this array should look like.
         /// Interceptors are applied in the array order.
         /// </summary>
-        List<IRequestInterceptors> RequestInterceptors { get; set; }
+        public List<IRequestInterceptors> RequestInterceptors { get; set; }
 
         /// <summary>
         /// Interceptors for augmenting responses before they are passed into mixins and end-users.
         /// See Interceptors section for more information how each entry in this array should look like.
         /// Interceptors are applied in the array order.
         /// </summary>
-        List<IResponseInterceptors> ResponseInterceptors { get; set; }
+        public List<IResponseInterceptors> ResponseInterceptors { get; set; }
 
         /// <summary>
         /// An object containing additional JSON-RPC request parameters.
         /// </summary>
-        IProtocoll Protocol { get; set; } = new Protocoll();
+        public IProtocoll Protocol { get; set; } = new Protocoll();
         #endregion
 
         internal Task<ClientWebSocket> CreateSocketCall(CancellationToken ct)

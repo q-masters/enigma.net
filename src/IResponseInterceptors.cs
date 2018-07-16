@@ -1,6 +1,6 @@
 ﻿namespace enigma
 {
-    internal interface IResponseInterceptors
+    public interface IResponseInterceptors
     {
     }
 }

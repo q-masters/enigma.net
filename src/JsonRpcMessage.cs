@@ -9,8 +9,9 @@
     using Newtonsoft.Json.Linq;
     #endregion
 
+    #region JsonRpcRequestMessage
     [JsonObject(MemberSerialization.OptIn)]
-    public class JsonRpcRequestMessage
+    internal class JsonRpcRequestMessage
     {
         #region Constructor
         internal JsonRpcRequestMessage()
@@ -22,33 +23,37 @@
         #region Properties
         [JsonProperty("jsonrpc")]
         public string JsonRpcVersion { get; private set; }
-        
+
         [JsonProperty("method")]
         public string Method { get; set; }
 
         [JsonProperty("params")]
         public JToken Parameters { get; set; }
-        
+
         [JsonProperty("id", Order = 1)]
         public int Id { get; set; }
         #endregion
     }
+    #endregion
 
+    #region JsonRpcGeneratedAPIRequestMessage
     [JsonObject(MemberSerialization.OptIn)]
-    public class JsonRpcGeneratedAPIRequestMessage: JsonRpcRequestMessage
-{
+    internal class JsonRpcGeneratedAPIRequestMessage : JsonRpcRequestMessage
+    {
         #region Properties
         [JsonProperty("handle")]
         public int Handle { get; set; }
 
         [DefaultValue(false)]
-        [JsonProperty("delta", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        [JsonProperty("delta", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool Delta { get; set; }
         #endregion
     }
+    #endregion
 
+    #region JsonRpcResponseMessage
     [JsonObject(MemberSerialization.OptIn)]
-    public class JsonRpcResponseMessage
+    internal class JsonRpcResponseMessage
     {
         #region Properties
         [JsonProperty("jsonrpc")]
@@ -65,9 +70,11 @@
         public int Id { get; private set; }
         #endregion
     }
+    #endregion
 
+    #region JsonRpcGeneratedAPIResponseMessage
     [JsonObject(MemberSerialization.OptIn)]
-    public class JsonRpcGeneratedAPIResponseMessage: JsonRpcResponseMessage
+    internal class JsonRpcGeneratedAPIResponseMessage : JsonRpcResponseMessage
     {
         #region Properties
         [JsonProperty("change")]
@@ -76,5 +83,6 @@
         [JsonProperty("closed")]
         public List<int> Closed { get; set; }
         #endregion
-    }
+    } 
+    #endregion
 }
