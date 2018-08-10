@@ -67,9 +67,15 @@
                 input.ContinueWith((message) =>
                 {
                     if (message.IsCanceled)
+                    {
                         tcs.SetCanceled();
+                        return;
+                    }
                     if (message.IsFaulted)
+                    {
                         tcs.SetException(message.Exception);
+                        return;
+                    }
 
                     var qReturn = message?.Result?.SelectToken("qReturn");
                     if (qReturn != null && qReturn.Type == JTokenType.Object && qReturn["qHandle"] != null)
