@@ -40,14 +40,14 @@
             urlBuilder.Append($"{urlConfig.Host}");
 
             if (String.IsNullOrEmpty(urlConfig.AppId) && String.IsNullOrEmpty(urlConfig.Route))
-                urlConfig.Route = "/app/engineData";
+                urlConfig.Route = "app/engineData";
 
             urlBuilder.Append(urlConfig?.Port > 0 ? $":{urlConfig?.Port}" : "");
             urlBuilder.Append(String.IsNullOrEmpty(urlConfig?.Prefix) ? $"{urlConfig?.Prefix?.Trim('/')}" : "");
             urlBuilder.Append(String.IsNullOrEmpty(urlConfig?.SubPath) ? $"{urlConfig?.SubPath?.Trim('/')}" : "");
 
             if (!String.IsNullOrEmpty(urlConfig?.Route))
-                urlBuilder.Append($"{urlConfig?.Route?.Trim('/')}");
+                urlBuilder.Append($"/{urlConfig?.Route?.Trim('/')}");
             else if (!String.IsNullOrEmpty(urlConfig?.AppId))
                 urlBuilder.Append($"/app/{HttpUtility.UrlEncode(urlConfig?.AppId)}");
             if (!String.IsNullOrEmpty(urlConfig?.Identity))
