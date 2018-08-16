@@ -1,4 +1,4 @@
-﻿namespace enigma
+﻿namespace SenseDesktop
 {
     #region Usings
     using System;
@@ -17,8 +17,9 @@
     using Qlik.EngineAPI;
     using System.Linq;
     using NLog;
+    using enigma;
     #endregion
-   
+
     class Program
     {
         #region nlog helper for netcore
@@ -92,6 +93,7 @@
 
             // now with cool full type support
             IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+            var appName = Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf");
 
             global.EngineVersionAsync()
                 .ContinueWith((engVer) =>
@@ -99,7 +101,7 @@
                     Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
                 });
             
-            global.OpenDocAsync(Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf"))
+            global.OpenDocAsync(appName)
                 .ContinueWith((newApp) =>
                 {
 
@@ -132,6 +134,10 @@
                 });
 
             //Thread.Sleep(3000);
+
+            //find the bookmark with name
+            var bookmarkExample = new BookmarkExample(global, appName);
+            bookmarkExample.GetBookmarkId("MyBookmark");
 
             Console.ReadLine();
         }
