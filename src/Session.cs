@@ -115,7 +115,12 @@
                 string json = "";
                 try
                 {
-                    json = JsonConvert.SerializeObject(request);
+                    json = JsonConvert.SerializeObject(request,
+                           Newtonsoft.Json.Formatting.None,
+                           new JsonSerializerSettings
+                           {
+                               NullValueHandling = NullValueHandling.Ignore,
+                           });
                 }
                 catch (Exception ex)
                 {

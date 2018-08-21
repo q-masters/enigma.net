@@ -58,12 +58,18 @@
 #pragma warning disable 1591 // no XML Comment Warning for override
         public override bool TryConvert(ConvertBinder binder, out object result)
         {            
-            Type gArgs = binder.ReturnType.GetGenericArguments().FirstOrDefault() ?? typeof(object);
-
-            if (!typeof(JToken).IsAssignableFrom(gArgs))
+            Type gArgs = binder.ReturnType.GetGenericArguments().FirstOrDefault();
+            bool tryDynamicResult = false;
+            if (gArgs == typeof(object))
+            {
+                gArgs = typeof(JObject);
+                tryDynamicResult = true;
+            }
+            gArgs = gArgs ?? typeof(object);
+            if (!gArgs.IsAssignableFrom(typeof(JToken)))
             {
                 var tcs = new TaskCompletionSource(gArgs);
-
+                           
                 input.ContinueWith((message) =>
                 {
                     if (message.IsCanceled)
@@ -75,7 +81,7 @@
                     {
                         tcs.SetException(message.Exception);
                         return;
-                    }
+                    }               
 
                     var qReturn = message?.Result?.SelectToken("qReturn");
                     if (qReturn != null && qReturn.Type == JTokenType.Object && qReturn["qHandle"] != null)
@@ -100,6 +106,19 @@
                             else
                             {
                                 resultToken = message.Result;
+                            }
+
+                            if (gArgs.IsAssignableFrom(typeof(JObject)) && resultToken as JObject != null)
+                            {
+                                if (tryDynamicResult)
+                                {
+                                    dynamic dt = resultToken as JObject;
+                                    var tcs2 = new TaskCompletionSource<dynamic>();
+                                    tcs2.SetResult(resultToken);                                    
+                                }
+                                else
+                                    tcs.SetResult(resultToken);
+                                return;
                             }
 
                             if (gArgs != typeof(object))
@@ -258,10 +277,23 @@
 
                     if (item == null)
                         break;
-                    //    jArray.Add("");
-                    //else
 
-                    jArray.Add(item);
+                    
+                    var oo = JsonConvert.SerializeObject(item,
+                          Newtonsoft.Json.Formatting.None,
+                          new JsonSerializerSettings
+                          {
+                              NullValueHandling = NullValueHandling.Ignore,
+                          });
+                    jArray.Add(JToken.Parse(oo));
+                    //if (item is Object)
+                    //{
+                    //    var jj = JObject.FromObject(item);
+                    //    jArray.Add(jj);
+                    //}
+                    //else
+                    //   .Add(item);
+
                 }
                 jToken = jArray;
             }

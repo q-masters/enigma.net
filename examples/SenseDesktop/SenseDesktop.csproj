@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="ImpromptuInterface" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="qlik-engineapi" Version="0.1.0-alpha0056" />    
+    <PackageReference Include="qlik-engineapi" Version="0.1.0-alpha0062" />    
   </ItemGroup>
 
   <ItemGroup>

@@ -70,74 +70,74 @@
 
             dynamic globalDyn = (GeneratedAPI)globalTask.Result;
 
-            // full work with Dynamic
-            ((Task<dynamic>)globalDyn.EngineVersion())
-            .ContinueWith((res) =>
-            {
-                Console.WriteLine("EngineVER1: " + res.Result.qComponentVersion.ToString());
-            });
+            //// full work with Dynamic
+            //((Task<dynamic>)globalDyn.EngineVersion())
+            //.ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("EngineVER1: " + res.Result.qComponentVersion.ToString());
+            //});
 
-            // show that all functions can be called with Async or without Async
-            ((Task<dynamic>)globalDyn.EngineVersionAsync())
-            .ContinueWith((res) =>
-            {
-                Console.WriteLine("EngineVER2: " + res.Result.qComponentVersion.ToString());
-            });
+            //// show that all functions can be called with Async or without Async
+            //((Task<dynamic>)globalDyn.EngineVersionAsync())
+            //.ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("EngineVER2: " + res.Result.qComponentVersion.ToString());
+            //});
 
-            // even with small letter like enigma.js is possible
-            ((Task<dynamic>)globalDyn.engineVersion())
-            .ContinueWith((res) =>
-            {
-                Console.WriteLine("EngineVER3: " + res.Result.qComponentVersion.ToString());
-            });
+            //// even with small letter like enigma.js is possible
+            //((Task<dynamic>)globalDyn.engineVersion())
+            //.ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("EngineVER3: " + res.Result.qComponentVersion.ToString());
+            //});
 
-            // now with cool full type support
+            //// now with cool full type support
             IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
             var appName = Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf");
 
-            global.EngineVersionAsync()
-                .ContinueWith((engVer) =>
-                {
-                    Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
-                });
+            //global.EngineVersionAsync()
+            //    .ContinueWith((engVer) =>
+            //    {
+            //        Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
+            //    });
             
-            global.OpenDocAsync(appName)
-                .ContinueWith((newApp) =>
-                {
+            //global.OpenDocAsync(appName)
+            //    .ContinueWith((newApp) =>
+            //    {
 
-                    Console.WriteLine("Object " + (newApp.Result).ToString());
+            //        Console.WriteLine("Object " + (newApp.Result).ToString());
 
-                    var app = newApp.Result;
+            //        var app = newApp.Result;
 
-                    // test the changed notification of the opend app
-                    app.Changed += App_Changed;
+            //        // test the changed notification of the opend app
+            //        app.Changed += App_Changed;
 
-                    // just a normal get script
-                    app.GetScriptAsync()
-                        .ContinueWith((script) =>
-                        {
-                            Console.WriteLine("Script" + script.Result.ToString().Substring(1, 100));
-                        });
+            //        // just a normal get script
+            //        app.GetScriptAsync()
+            //            .ContinueWith((script) =>
+            //            {
+            //                Console.WriteLine("Script" + script.Result.ToString().Substring(1, 100));
+            //            });
 
-                    // change the script, so that the app changed is triggered
-                    app.SetScriptAsync("HALLO")
-                        .ContinueWith((res) =>
-                        {
-                            // read the changed script
-                            app.GetScriptAsync()
-                                .ContinueWith((script) =>
-                                {
-                                    Console.WriteLine("Script2" + script.Result.ToString());
-                                });
-                        });
+            //        // change the script, so that the app changed is triggered
+            //        app.SetScriptAsync("HALLO")
+            //            .ContinueWith((res) =>
+            //            {
+            //                // read the changed script
+            //                app.GetScriptAsync()
+            //                    .ContinueWith((script) =>
+            //                    {
+            //                        Console.WriteLine("Script2" + script.Result.ToString());
+            //                    });
+            //            });
 
-                });
+            //    });
 
             //Thread.Sleep(3000);
 
             //find the bookmark with name
             var bookmarkExample = new BookmarkExample(global, appName);
-            bookmarkExample.GetBookmarkId("MyBookmark");
+            bookmarkExample.ListBookmarks();
 
             Console.ReadLine();
         }
