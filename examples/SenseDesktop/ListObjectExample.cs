@@ -37,7 +37,7 @@
                     {
                         qInitialDataFetch = new List<NxPage>
                         {
-                            new NxPage() { qTop = 0, qHeight = 3, qLeft = 0, qWidth = 1 }
+                            new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
                         },
                         qDef = new
                         {
@@ -84,6 +84,90 @@
             catch (Exception ex)
             {
                 logger.Error(ex, $"The method \"{nameof(ListListObjectDataAsync)}\" was failed.");
+            }
+        }
+
+        public async Task<IGenericObject> GetGenericObjectAsync(string filterText = null)
+        {
+            try
+            {
+                if (String.IsNullOrEmpty(filterText))
+                    filterText = "Region";
+
+                var request = JObject.FromObject(new
+                {
+                    qInfo = new
+                    {
+                        qType = "ListObject"
+                    },
+                    qListObjectDef = new
+                    {
+                        qInitialDataFetch = new List<NxPage>
+                    {
+                        new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
+                    },
+                        qDef = new
+                        {
+                            qFieldDefs = new List<string>
+                        {
+                            filterText,
+                        },
+                            qFieldLabels = new List<string>
+                        {
+                            Guid.NewGuid().ToString(),
+                        },
+                            qSortCriterias = new List<SortCriteria>
+                        {
+                            new SortCriteria() { qSortByState = 1 },
+                        }
+                        },
+                        qShowAlternatives = false,
+                    }
+                });
+
+                return await App.CreateSessionObjectAsync(request)
+                .ContinueWith<IGenericObject>((res) =>
+                {
+                    var genObj = res.Result;
+                    genObj.GetLayoutAsync().Wait();
+                    return genObj;
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"The method \"{nameof(GetGenericObjectAsync)}\" was failed.");
+                return null;
+            }
+        }
+
+        public async Task<JObject> GetListObjectDataAsync(IGenericObject genericObject)
+        {
+            try
+            {
+                var request = JObject.FromObject(new
+                {
+                    qPath = "/qListObjectDef",
+                    qPages = new List<NxPage>
+                    {
+                        new NxPage()
+                        {
+                             qTop = 0,
+                             qLeft = 0,
+                             qWidth = 1,
+                             qHeight = 3,
+                        }
+                    }
+                });
+
+                var jsonRequest = request.ToString();
+                
+                //Hier tritt der Fehler auf...
+                return await genericObject.GetListObjectDataAsync<JObject>(request);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"The method \"{nameof(GetListObjectDataAsync)}\" was failed.");
+                return null;
             }
         }
     }

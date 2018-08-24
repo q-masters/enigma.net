@@ -156,6 +156,11 @@
             var task4 = listObjectExample.ListListObjectDataAsync();
             task4.Wait();
 
+            var task5 = listObjectExample.GetGenericObjectAsync("Region");
+            //in der folgenden methode tritt der Fehler auf.
+            var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
+            var jsonObject = task6.Result;
+
             Console.WriteLine("Finish");
             Console.ReadLine();
         }
