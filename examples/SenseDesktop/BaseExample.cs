@@ -9,13 +9,11 @@ namespace SenseDesktop
 {
     public class BaseExample
     {
-        public IGlobal Global { get; private set; }
-        public string AppName { get; private set; }
+        public IDoc App { get; private set; }
 
-        public BaseExample(IGlobal global, string appName)
+        public BaseExample(IDoc app)
         {
-            Global = global;
-            AppName = appName;
+            App = app;
         }
     }
 }

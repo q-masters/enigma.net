@@ -94,6 +94,7 @@
             //// now with cool full type support
             IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
             var appName = Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf");
+            var app = global.OpenDocAsync(appName).Result;
 
             //global.EngineVersionAsync()
             //    .ContinueWith((engVer) =>
@@ -135,10 +136,27 @@
 
             //Thread.Sleep(3000);
 
-            //find the bookmark with name
-            var bookmarkExample = new BookmarkExample(global, appName);
-            bookmarkExample.ListBookmarks();
+            //find the bookmark with type
+            var bookmarkExample = new BookmarkExample(app);
+            var task1 = bookmarkExample.ListBookmarksAsync();
+            task1.Wait();
 
+            //find dimensions
+            var dimensionExample = new DimensionExample(app);
+            var task2 = dimensionExample.ListDimensionsAsync();
+            task2.Wait();
+
+            //find current selections
+            var selectionExample = new SelectionExample(app);
+            var task3 = selectionExample.ListCurrentSelectionsAsync();
+            task3.Wait();
+
+            //find list object data
+            var listObjectExample = new ListObjectExample(app);
+            var task4 = listObjectExample.ListListObjectDataAsync();
+            task4.Wait();
+
+            Console.WriteLine("Finish");
             Console.ReadLine();
         }
 
