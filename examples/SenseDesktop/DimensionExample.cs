@@ -26,14 +26,17 @@
                 // Define the Properties as JSON from a anonymous class
                 var request = JObject.FromObject(new
                 {
-                    qInfo = new
+                    qProp = new
                     {
-                        qType = "DimensionList"
-                    },
-                    qDimensionListDef = new
-                    {
-                        qType = "dimension",
-                        qData = new { }
+                        qInfo = new
+                        {
+                            qType = "DimensionList"
+                        },
+                        qDimensionListDef = new
+                        {
+                            qType = "dimension",
+                            qData = new { }
+                        }
                     }
                 });
 

@@ -29,32 +29,35 @@
                 // Define the Properties as JSON from a anonymous class
                 var request = JObject.FromObject(new
                 {
-                    qInfo = new
+                    qProp = new
                     {
-                        qType = "ListObject"
-                    },
-                    qListObjectDef = new
-                    {
-                        qInitialDataFetch = new List<NxPage>
+                        qInfo = new
+                        {
+                            qType = "ListObject"
+                        },
+                        qListObjectDef = new
+                        {
+                            qInitialDataFetch = new List<NxPage>
                         {
                             new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
                         },
-                        qDef = new
-                        {
-                            qFieldDefs = new List<string>
+                            qDef = new
+                            {
+                                qFieldDefs = new List<string>
                             {
                                 filterText,
                             },
-                            qFieldLabels = new List<string>
+                                qFieldLabels = new List<string>
                             {
                                 Guid.NewGuid().ToString(),
                             },
-                            qSortCriterias = new List<SortCriteria>
+                                qSortCriterias = new List<SortCriteria>
                             {
                                 new SortCriteria() { qSortByState = 1 },
                             }
-                        },
-                        qShowAlternatives = false,
+                            },
+                            qShowAlternatives = false,
+                        }
                     }
                 });
 
@@ -96,32 +99,35 @@
 
                 var request = JObject.FromObject(new
                 {
-                    qInfo = new
+                    qProp =  new
                     {
-                        qType = "ListObject"
-                    },
-                    qListObjectDef = new
-                    {
-                        qInitialDataFetch = new List<NxPage>
+                        qInfo = new
+                        {
+                            qType = "ListObject"
+                        },
+                        qListObjectDef = new
+                        {
+                            qInitialDataFetch = new List<NxPage>
                     {
                         new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
                     },
-                        qDef = new
-                        {
-                            qFieldDefs = new List<string>
+                            qDef = new
+                            {
+                                qFieldDefs = new List<string>
                         {
                             filterText,
                         },
-                            qFieldLabels = new List<string>
+                                qFieldLabels = new List<string>
                         {
                             Guid.NewGuid().ToString(),
                         },
-                            qSortCriterias = new List<SortCriteria>
+                                qSortCriterias = new List<SortCriteria>
                         {
                             new SortCriteria() { qSortByState = 1 },
                         }
-                        },
-                        qShowAlternatives = false,
+                            },
+                            qShowAlternatives = false,
+                        }
                     }
                 });
 
@@ -140,7 +146,7 @@
             }
         }
 
-        public async Task<JObject> GetListObjectDataAsync(IGenericObject genericObject)
+        public async Task<List<NxDataPage>> GetListObjectDataAsync2(IGenericObject genericObject)
         {
             try
             {
@@ -159,10 +165,36 @@
                     }
                 });
 
-                var jsonRequest = request.ToString();
-                
-                //Hier tritt der Fehler auf...
-                return await genericObject.GetListObjectDataAsync<JObject>(request);
+                return await genericObject.GetListObjectDataAsync(request);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"The method \"{nameof(GetListObjectDataAsync)}\" was failed.");
+                return null;
+            }
+        }
+
+
+        public async Task<JArray> GetListObjectDataAsync(IGenericObject genericObject)
+        {
+            try
+            {
+                var request = JObject.FromObject(new
+                {
+                    qPath = "/qListObjectDef",
+                    qPages = new List<NxPage>
+                    {
+                        new NxPage()
+                        {
+                             qTop = 0,
+                             qLeft = 0,
+                             qWidth = 1,
+                             qHeight = 3,
+                        }
+                    }
+                });
+
+                return await genericObject.GetListObjectDataAsync<JArray>(request);
             }
             catch (Exception ex)
             {

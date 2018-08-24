@@ -247,7 +247,7 @@
 
             JToken jToken = null;
 
-            if (args.Length == 1 || (args.Length==2 && ctsArg.Count == 1))
+            if (args.Length == 1 || (args.Length==2 && (ctsArg.Count == 1 || args[1] == null)))
             {
                 // special case one real argument beside CancellationToken
                 // check for string or JToken

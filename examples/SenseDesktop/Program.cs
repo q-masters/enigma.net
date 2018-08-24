@@ -157,9 +157,16 @@
             task4.Wait();
 
             var task5 = listObjectExample.GetGenericObjectAsync("Region");
-            //in der folgenden methode tritt der Fehler auf.
+
+            // GetListObjectDataAsync2 should work with the new qlik-engineAPI
             var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
-            var jsonObject = task6.Result;
+            
+            dynamic jsonObject = task6.Result;
+          //  var jsonObject = task6.Result;
+            foreach (var item in jsonObject[0].qMatrix)
+            {
+                Console.WriteLine(item[0].qText);
+            }
 
             Console.WriteLine("Finish");
             Console.ReadLine();

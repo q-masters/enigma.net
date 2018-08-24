@@ -26,11 +26,14 @@
                 // Define the Properties as JSON from a anonymous class
                 var request = JObject.FromObject(new
                 {
-                    qInfo = new
+                    qProp = new
                     {
-                        qType = "CurrentSelection"
-                    },
-                    qSelectionObjectDef = new { }
+                        qInfo = new
+                        {
+                            qType = "CurrentSelection"
+                        },
+                        qSelectionObjectDef = new { }
+                    }
                 });
 
                 await App.CreateSessionObjectAsync(request)

@@ -42,20 +42,23 @@
                 // Define the Properties as JSON from a anonymous class
                 var request = JObject.FromObject(new
                 {
-                    qInfo = new
+                    qProp = new
                     {
-                        qType = "BookmarkList"
-                    },
-                    qBookmarkListDef = new
-                    {
-                        qType = type, // default use "bookmark"
-                        qData = new
+                        qInfo = new
                         {
-                            title = "/qMetaDef/title"
+                            qType = "BookmarkList"
+                        },
+                        qBookmarkListDef = new
+                        {
+                            qType = type, // default use "bookmark"
+                            qData = new
+                            {
+                                title = "/qMetaDef/title"
+                            }
                         }
                     }
                 });
-
+                
                 await App.CreateSessionObjectAsync(request)
                 .ContinueWith((res) =>
                 {
