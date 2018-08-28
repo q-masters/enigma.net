@@ -101,7 +101,7 @@
             //    {
             //        Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
             //    });
-            
+
             //global.OpenDocAsync(appName)
             //    .ContinueWith((newApp) =>
             //    {
@@ -136,37 +136,41 @@
 
             //Thread.Sleep(3000);
 
-            //find the bookmark with type
-            var bookmarkExample = new BookmarkExample(app);
-            var task1 = bookmarkExample.ListBookmarksAsync();
-            task1.Wait();
+            //Caluculation Test
+            var calc = new CalculationExample(app);
+            calc.CalcRandom(10);
 
-            //find dimensions
-            var dimensionExample = new DimensionExample(app);
-            var task2 = dimensionExample.ListDimensionsAsync();
-            task2.Wait();
+            ////find the bookmark with type
+            //var bookmarkExample = new BookmarkExample(app);
+            //var task1 = bookmarkExample.ListBookmarksAsync();
+            //task1.Wait();
 
-            //find current selections
-            var selectionExample = new SelectionExample(app);
-            var task3 = selectionExample.ListCurrentSelectionsAsync();
-            task3.Wait();
+            ////find dimensions
+            //var dimensionExample = new DimensionExample(app);
+            //var task2 = dimensionExample.ListDimensionsAsync();
+            //task2.Wait();
 
-            //find list object data
-            var listObjectExample = new ListObjectExample(app);
-            var task4 = listObjectExample.ListListObjectDataAsync();
-            task4.Wait();
+            ////find current selections
+            //var selectionExample = new SelectionExample(app);
+            //var task3 = selectionExample.ListCurrentSelectionsAsync();
+            //task3.Wait();
 
-            var task5 = listObjectExample.GetGenericObjectAsync("Region");
+            //////find list object data
+            //var listObjectExample = new ListObjectExample(app);
+            //var task4 = listObjectExample.ListListObjectDataAsync();
+            //task4.Wait();
+
+            //var task5 = listObjectExample.GetGenericObjectAsync("Region");
 
             // GetListObjectDataAsync2 should work with the new qlik-engineAPI
-            var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
-            
-            dynamic jsonObject = task6.Result;
-          //  var jsonObject = task6.Result;
-            foreach (var item in jsonObject[0].qMatrix)
-            {
-                Console.WriteLine(item[0].qText);
-            }
+            //var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
+
+            //dynamic jsonObject = task6.Result;
+            //  var jsonObject = task6.Result;
+            //foreach (var item in jsonObject[0].qMatrix)
+            //{
+            //    Console.WriteLine(item[0].qText);
+            //}
 
             Console.WriteLine("Finish");
             Console.ReadLine();
