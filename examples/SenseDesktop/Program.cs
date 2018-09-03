@@ -18,6 +18,7 @@
     using System.Linq;
     using NLog;
     using enigma;
+    using System.Collections.Generic;
     #endregion
 
     class Program
@@ -136,29 +137,30 @@
 
             //Thread.Sleep(3000);
 
+            var tasks = new List<Task>();
+
             //Caluculation Test
             var calc = new CalculationExample(app);
             calc.CalcRandom(1);
 
             //find the bookmark with type
             var bookmarkExample = new BookmarkExample(app);
-            var task1 = bookmarkExample.ListBookmarksAsync();
-            task1.Wait();
+            tasks.Add(bookmarkExample.ListBookmarksAsync());
 
             //find dimensions
             var dimensionExample = new DimensionExample(app);
-            var task2 = dimensionExample.ListDimensionsAsync();
-            task2.Wait();
+            tasks.Add(dimensionExample.ListDimensionsAsync());
 
             //find current selections
             var selectionExample = new SelectionExample(app);
-            var task3 = selectionExample.ListCurrentSelectionsAsync();
-            task3.Wait();
+            tasks.Add(selectionExample.ListCurrentSelectionsAsync());
 
             ////find list object data
             var listObjectExample = new ListObjectExample(app);
-            var task4 = listObjectExample.ListListObjectDataAsync();
-            task4.Wait();
+            tasks.Add(listObjectExample.ListListObjectDataAsync());
+
+            Task.WaitAll(tasks.ToArray());
+
             var task5 = listObjectExample.GetGenericObjectAsync("Region");
             var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
 
