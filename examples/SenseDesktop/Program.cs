@@ -1,4 +1,4 @@
-﻿namespace enigma
+﻿namespace SenseDesktop
 {
     #region Usings
     using System;
@@ -17,8 +17,10 @@
     using Qlik.EngineAPI;
     using System.Linq;
     using NLog;
+    using enigma;
+    using System.Collections.Generic;
     #endregion
-   
+
     class Program
     {
         #region nlog helper for netcore
@@ -69,70 +71,106 @@
 
             dynamic globalDyn = (GeneratedAPI)globalTask.Result;
 
-            // full work with Dynamic
-            ((Task<dynamic>)globalDyn.EngineVersion())
-            .ContinueWith((res) =>
-            {
-                Console.WriteLine("EngineVER1: " + res.Result.qComponentVersion.ToString());
-            });
+            //// full work with Dynamic
+            //((Task<dynamic>)globalDyn.EngineVersion())
+            //.ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("EngineVER1: " + res.Result.qComponentVersion.ToString());
+            //});
 
-            // show that all functions can be called with Async or without Async
-            ((Task<dynamic>)globalDyn.EngineVersionAsync())
-            .ContinueWith((res) =>
-            {
-                Console.WriteLine("EngineVER2: " + res.Result.qComponentVersion.ToString());
-            });
+            //// show that all functions can be called with Async or without Async
+            //((Task<dynamic>)globalDyn.EngineVersionAsync())
+            //.ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("EngineVER2: " + res.Result.qComponentVersion.ToString());
+            //});
 
-            // even with small letter like enigma.js is possible
-            ((Task<dynamic>)globalDyn.engineVersion())
-            .ContinueWith((res) =>
-            {
-                Console.WriteLine("EngineVER3: " + res.Result.qComponentVersion.ToString());
-            });
+            //// even with small letter like enigma.js is possible
+            //((Task<dynamic>)globalDyn.engineVersion())
+            //.ContinueWith((res) =>
+            //{
+            //    Console.WriteLine("EngineVER3: " + res.Result.qComponentVersion.ToString());
+            //});
 
-            // now with cool full type support
+            //// now with cool full type support
             IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+            var appName = Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf");
+            var app = global.OpenDocAsync(appName).Result;
 
-            global.EngineVersionAsync()
-                .ContinueWith((engVer) =>
-                {
-                    Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
-                });
-            
-            global.OpenDocAsync(Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf"))
-                .ContinueWith((newApp) =>
-                {
+            //global.EngineVersionAsync()
+            //    .ContinueWith((engVer) =>
+            //    {
+            //        Console.WriteLine("CastedEngineVer:" + engVer.Result.qComponentVersion);
+            //    });
 
-                    Console.WriteLine("Object " + (newApp.Result).ToString());
+            //global.OpenDocAsync(appName)
+            //    .ContinueWith((newApp) =>
+            //    {
 
-                    var app = newApp.Result;
+            //        Console.WriteLine("Object " + (newApp.Result).ToString());
 
-                    // test the changed notification of the opend app
-                    app.Changed += App_Changed;
+            //        var app = newApp.Result;
 
-                    // just a normal get script
-                    app.GetScriptAsync()
-                        .ContinueWith((script) =>
-                        {
-                            Console.WriteLine("Script" + script.Result.ToString().Substring(1, 100));
-                        });
+            //        // test the changed notification of the opend app
+            //        app.Changed += App_Changed;
 
-                    // change the script, so that the app changed is triggered
-                    app.SetScriptAsync("HALLO")
-                        .ContinueWith((res) =>
-                        {
-                            // read the changed script
-                            app.GetScriptAsync()
-                                .ContinueWith((script) =>
-                                {
-                                    Console.WriteLine("Script2" + script.Result.ToString());
-                                });
-                        });
+            //        // just a normal get script
+            //        app.GetScriptAsync()
+            //            .ContinueWith((script) =>
+            //            {
+            //                Console.WriteLine("Script" + script.Result.ToString().Substring(1, 100));
+            //            });
 
-                });
+            //        // change the script, so that the app changed is triggered
+            //        app.SetScriptAsync("HALLO")
+            //            .ContinueWith((res) =>
+            //            {
+            //                // read the changed script
+            //                app.GetScriptAsync()
+            //                    .ContinueWith((script) =>
+            //                    {
+            //                        Console.WriteLine("Script2" + script.Result.ToString());
+            //                    });
+            //            });
+
+            //    });
 
             //Thread.Sleep(3000);
 
+            var tasks = new List<Task>();
+
+            //Caluculation Test
+            var calc = new CalculationExample(app);
+            calc.CalcRandom(1);
+
+            //find the bookmark with type
+            var bookmarkExample = new BookmarkExample(app);
+            tasks.Add(bookmarkExample.ListBookmarksAsync());
+
+            //find dimensions
+            var dimensionExample = new DimensionExample(app);
+            tasks.Add(dimensionExample.ListDimensionsAsync());
+
+            //find current selections
+            var selectionExample = new SelectionExample(app);
+            tasks.Add(selectionExample.ListCurrentSelectionsAsync());
+
+            ////find list object data
+            var listObjectExample = new ListObjectExample(app);
+            tasks.Add(listObjectExample.ListListObjectDataAsync());
+
+            Task.WaitAll(tasks.ToArray());
+
+            var task5 = listObjectExample.GetGenericObjectAsync("Region");
+            var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
+
+            dynamic jsonObject = task6.Result;
+            foreach (var item in jsonObject[0].qMatrix)
+            {
+                Console.WriteLine(item[0]?.qText);
+            }
+
+            Console.WriteLine("Finish");
             Console.ReadLine();
         }
 

@@ -3,7 +3,7 @@
     #region Usings
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
+    using System.Collections.Generic;    
     using System.Net.WebSockets;
     using System.Text;
     using System.Threading;
@@ -62,7 +62,7 @@
                     // Todo add here the global Cancelation Token that is
                     // triggered from the CloseAsync
                     this.ReceiveLoopAsync(ct2);
-
+                    Task.Run(() => { this.SendLoop(ct2); });
                     var global = new GeneratedAPI(new ObjectResult() { QHandle = -1, QType = "Global" }, this);
                     GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));
                     return global;
@@ -115,7 +115,12 @@
                 string json = "";
                 try
                 {
-                    json = JsonConvert.SerializeObject(request);
+                    json = JsonConvert.SerializeObject(request,
+                           Newtonsoft.Json.Formatting.None,
+                           new JsonSerializerSettings
+                           {
+                               NullValueHandling = NullValueHandling.Ignore,
+                           });
                 }
                 catch (Exception ex)
                 {
@@ -125,16 +130,7 @@
                 var bt = Encoding.UTF8.GetBytes(json);
                 ArraySegment<byte> nm = new ArraySegment<byte>(bt);
                 OpenRequests.TryAdd(request.Id, tcs);
-                _ = socket.SendAsync(nm, WebSocketMessageType.Text, true, ct)
-                       .ContinueWith(
-                            result =>
-                            {
-                                if (result.IsFaulted)
-                                    tcs.SetException(result.Exception);
-                                if (result.IsCanceled)
-                                    tcs.SetCanceled();
-                            })
-                            ;
+                OpenSendRequest.Enqueue(new SendRequest() { ct = ct, tcs = tcs, message = nm });
             }
             catch (Exception ex)
             {
@@ -144,6 +140,48 @@
             return await tcs.Task;
         }
         #endregion
+
+        internal class SendRequest
+        {
+            public ArraySegment<byte> message;
+            public CancellationToken ct;
+            public TaskCompletionSource<JToken> tcs;
+        }
+
+        private ConcurrentQueue<SendRequest> OpenSendRequest = new ConcurrentQueue<SendRequest>();
+
+        private void SendLoop(CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    while (!OpenSendRequest.IsEmpty)
+                    {
+                        if (OpenSendRequest.TryDequeue(out SendRequest sr))
+                        {
+                            socket.SendAsync(sr.message, WebSocketMessageType.Text, true, sr.ct)
+                                  .ContinueWith(
+                                       result =>
+                                       {
+                                            // todo Remove request.id from OpenRequests if faulted
+                                            if (result.IsFaulted)
+                                               sr.tcs.SetException(result.Exception);
+                                           if (result.IsCanceled)
+                                               sr.tcs.SetCanceled();
+                                       })
+                                       ;
+                        }
+                    }
+
+                    Thread.Sleep(10);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+        }
 
         #region ReceiveLoopAsync
         private async void ReceiveLoopAsync(CancellationToken cancellationToken)
