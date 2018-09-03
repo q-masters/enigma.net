@@ -60,10 +60,10 @@
         }
 
         /// <summary>
-        /// Build a full path from the app name.
+        /// Build a full path from the qlik app path.
         /// </summary>
-        /// <param name="appName">Name or Id of the app</param>
-        /// <returns>The full path to the app</returns>
+        /// <param name="appName">Name or Id of the qlik app</param>
+        /// <returns>The full path to the qlik app</returns>
         public static string GetFullAppName(string appName)
         {
             if (String.IsNullOrEmpty(appName))
@@ -71,7 +71,8 @@
             if (Guid.TryParse(appName, out var myguid))
                 return appName;
             var fullPath = appName;
-            if (!appName.ToLowerInvariant().StartsWith("%userprofile%") && !appName.Contains(":") && !appName.StartsWith("\\\\"))
+            if (!appName.ToLowerInvariant().StartsWith("%userprofile%") && !appName.Contains(":") &&
+                !appName.StartsWith("\\\\") && !appName.StartsWith("/"))
                 fullPath = $"%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\{appName.Trim('\\')}";
             if (!Path.HasExtension(fullPath))
                 fullPath = $"{fullPath}.qvf";

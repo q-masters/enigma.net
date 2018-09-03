@@ -146,7 +146,7 @@
             }
         }
 
-        public async Task<List<NxDataPage>> GetListObjectDataAsync2(IGenericObject genericObject)
+        public async Task<List<NxDataPage>> GetListObjectDataAsync(IGenericObject genericObject)
         {
             try
             {
@@ -174,32 +174,35 @@
             }
         }
 
-
-        public async Task<JArray> GetListObjectDataAsync(IGenericObject genericObject)
+        public async Task SelectValuesInternalAsync(List<int> indecs, IGenericObject genericObject)
         {
             try
             {
-                var request = JObject.FromObject(new
+                await genericObject.BeginSelectionsAsync(new List<string> { "/qListObjectDef" })
+                .ContinueWith((res1) =>
                 {
-                    qPath = "/qListObjectDef",
-                    qPages = new List<NxPage>
+                  genericObject.SelectListObjectValuesAsync("/qListObjectDef", indecs, true)
+                    .ContinueWith((res2) =>
                     {
-                        new NxPage()
-                        {
-                             qTop = 0,
-                             qLeft = 0,
-                             qWidth = 1,
-                             qHeight = 3,
-                        }
-                    }
+                        genericObject.EndSelectionsAsync(true).Wait();
+                    });
                 });
-
-                return await genericObject.GetListObjectDataAsync<JArray>(request);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"The method \"{nameof(GetListObjectDataAsync)}\" was failed.");
-                return null;
+                logger.Error(ex, $"The method \"{nameof(SelectValuesInternalAsync)}\" was failed.");
+            }
+        }
+
+        public async Task ClearSelectionsAsync(IGenericObject genericObject)
+        {
+            try
+            {
+                await genericObject.ClearSelectionsAsync("/qListObjectDef");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"The method \"{nameof(ClearSelectionsAsync)}\" was failed.");
             }
         }
     }
