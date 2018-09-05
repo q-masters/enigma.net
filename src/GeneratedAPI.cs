@@ -8,10 +8,22 @@
     using System.Threading;
     using System.Threading.Tasks;
     using System.Linq;
-    using Newtonsoft.Json.Linq;    
-    using Qlik.EngineAPI;
+    using Newtonsoft.Json.Linq;  
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
+    #endregion
+
+    #region IObjectInterface
+    public interface IObjectInterface
+    {
+        string qType { get; set; }
+        int qHandle { get; set; }
+        string qGenericType { get; set; }
+        string qGenericId { get; set; }
+        event EventHandler Changed;
+        event EventHandler Closed;
+        void OnChanged();
+    } 
     #endregion
 
     #region ObjectResult

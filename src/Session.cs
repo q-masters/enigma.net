@@ -11,7 +11,6 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using NLog;
-    using Qlik.EngineAPI;
     #endregion
 
     #region Session
