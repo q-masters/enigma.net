@@ -37,17 +37,6 @@
     </Otherwise>
   </Choose>
 
-  <Target Name="WriteVersion" AfterTargets="GetVersion" Condition="'$(PackageOutputAbsolutePath)' != ''">
-    <WriteLinesToFile File="$(PackageOutputAbsolutePath)\version.txt" Lines="$(GitVersion_NuGetVersion)" Overwrite="true" />
-  </Target>
-
-  <Target Name="SetPackageVersionFromFile" BeforeTargets="GenerateNuspec">
-    <ReadLinesFromFile File="$(PackageOutputAbsolutePath)\version.txt">
-      <Output TaskParameter="Lines" PropertyName="PackageVersion" />
-    </ReadLinesFromFile>
-    <Delete Files="$(PackageOutputAbsolutePath)\version.txt" />
-  </Target>
-
   <Target Name="PublishToNugetWithAPIKey" AfterTargets="GenerateNuspec">
     <ReadLinesFromFile File="$(SolutionDir)\..\..\nugetapikey.txt">
       <Output TaskParameter="Lines" PropertyName="NugetAPIKey" />
@@ -59,7 +48,7 @@
     <PackageReference Include="ImpromptuInterface" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="NLog" Version="4.5.9" />
-    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0008">
+    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0014">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>  
