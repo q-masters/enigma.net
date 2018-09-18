@@ -47,7 +47,7 @@
   <ItemGroup>
     <PackageReference Include="ImpromptuInterface" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="NLog" Version="4.5.9" />
+    <PackageReference Include="NLog" Version="4.5.10" />
     <PackageReference Include="GitVersionTask" Version="4.0.0-beta0014">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
