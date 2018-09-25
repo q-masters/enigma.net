@@ -8,10 +8,22 @@
     using System.Threading;
     using System.Threading.Tasks;
     using System.Linq;
-    using Newtonsoft.Json.Linq;    
-    using Qlik.EngineAPI;
+    using Newtonsoft.Json.Linq;  
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
+    #endregion
+
+    #region IObjectInterface
+    public interface IObjectInterface
+    {
+        string qType { get; set; }
+        int qHandle { get; set; }
+        string qGenericType { get; set; }
+        string qGenericId { get; set; }
+        event EventHandler Changed;
+        event EventHandler Closed;
+        void OnChanged();
+    } 
     #endregion
 
     #region ObjectResult
@@ -86,11 +98,23 @@
                     var qReturn = message?.Result?.SelectToken("qReturn");
                     if (qReturn != null && qReturn.Type == JTokenType.Object && qReturn["qHandle"] != null)
                     {
-                        var objectResult = qReturn.ToObject<ObjectResult>();
-                        var newObj = new GeneratedAPI(objectResult, session);
-                        session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
-                        IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
-                        tcs.SetResult(ia);
+                        if (qReturn["qHandle"].Type == JTokenType.Null)
+                            tcs.SetResult(null);
+                        else
+                        {
+                            try
+                            {
+                                var objectResult = qReturn.ToObject<ObjectResult>();
+                                var newObj = new GeneratedAPI(objectResult, session);
+                                session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
+                                IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
+                                tcs.SetResult(ia);
+                            }
+                            catch (Exception ex)
+                            {
+                                tcs.SetException(ex);
+                            }
+                        }
                     }
                     else
                     {
@@ -114,7 +138,7 @@
                                 {
                                     dynamic dt = resultToken as JObject;
                                     var tcs2 = new TaskCompletionSource<dynamic>();
-                                    tcs2.SetResult(resultToken);                                    
+                                    tcs2.SetResult(resultToken);
                                 }
                                 else
                                     tcs.SetResult(resultToken);
@@ -130,7 +154,7 @@
                         }
                         catch (Exception ex)
                         {
-                            tcs.SetException(ex);                            
+                            tcs.SetException(ex);
                         }
                     }
                 }

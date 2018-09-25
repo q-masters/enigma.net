@@ -97,6 +97,8 @@
             var appName = Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf");
             var app = global.OpenDocAsync(appName).Result;
 
+            var kk = global.ProductVersionAsync().Result;
+
             //global.EngineVersionAsync()
             //    .ContinueWith((engVer) =>
             //    {
@@ -138,6 +140,10 @@
             //Thread.Sleep(3000);
 
             var tasks = new List<Task>();
+
+            //Set bookmark test
+            //Here waits the code!!!
+            var bookmark = app.GetBookmarkAsync("demobookmark").Result;
 
             //Caluculation Test
             var calc = new CalculationExample(app);
