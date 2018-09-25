@@ -142,8 +142,20 @@
             var tasks = new List<Task>();
 
             //Set bookmark test
-            //Here waits the code!!!
             var bookmark = app.GetBookmarkAsync("demobookmark").Result;
+
+            //evaluate request
+            var request = JObject.FromObject(new
+            {
+                qExpression = "'$(vCurrentYear)'"
+            });
+
+            //Use this Overload from EvaluateExAsync it works fine.
+            var result = app.EvaluateExAsync(request).Result;
+
+            //Use this Overload it crashes!!!
+            result = app.EvaluateExAsync("'$(vCurrentYear)'").Result;
+
 
             //Caluculation Test
             var calc = new CalculationExample(app);
