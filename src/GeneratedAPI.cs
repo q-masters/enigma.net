@@ -284,6 +284,9 @@
                     try
                     {
                         jToken = JToken.Parse(innerString);
+                        if (jToken.Type != JTokenType.Object && jToken.Type != JTokenType.Array)
+                            jToken = null;
+
                     }
                     catch
                     {
