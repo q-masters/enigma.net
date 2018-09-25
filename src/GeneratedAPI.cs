@@ -98,11 +98,23 @@
                     var qReturn = message?.Result?.SelectToken("qReturn");
                     if (qReturn != null && qReturn.Type == JTokenType.Object && qReturn["qHandle"] != null)
                     {
-                        var objectResult = qReturn.ToObject<ObjectResult>();
-                        var newObj = new GeneratedAPI(objectResult, session);
-                        session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
-                        IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
-                        tcs.SetResult(ia);
+                        if (qReturn["qHandle"].Type == JTokenType.Null)
+                            tcs.SetResult(null);
+                        else
+                        {
+                            try
+                            {
+                                var objectResult = qReturn.ToObject<ObjectResult>();
+                                var newObj = new GeneratedAPI(objectResult, session);
+                                session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
+                                IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
+                                tcs.SetResult(ia);
+                            }
+                            catch (Exception ex)
+                            {
+                                tcs.SetException(ex);
+                            }
+                        }
                     }
                     else
                     {
@@ -126,7 +138,7 @@
                                 {
                                     dynamic dt = resultToken as JObject;
                                     var tcs2 = new TaskCompletionSource<dynamic>();
-                                    tcs2.SetResult(resultToken);                                    
+                                    tcs2.SetResult(resultToken);
                                 }
                                 else
                                     tcs.SetResult(resultToken);
@@ -142,7 +154,7 @@
                         }
                         catch (Exception ex)
                         {
-                            tcs.SetException(ex);                            
+                            tcs.SetException(ex);
                         }
                     }
                 }
