@@ -1,31 +1,31 @@
 ﻿namespace SenseDesktop
 {
     #region Usings
+    using Dynamitey;
+    using enigma;
+    using ImpromptuInterface;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using NLog;
+    using NLog.Config;
+    using Qlik.EngineAPI;
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Net.Security;
     using System.Net.WebSockets;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
-    using Dynamitey;
-    using ImpromptuInterface;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using NLog.Config;
-    using Qlik.EngineAPI;
-    using System.Linq;
-    using NLog;
-    using enigma;
-    using System.Collections.Generic;
     #endregion
 
     class Program
     {
         #region nlog helper for netcore
         private static void SetLoggerSettings(string configName)
-        {            
+        {
 #if NET452
             var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configName);
 #else
@@ -39,8 +39,8 @@
             }
 
             LogManager.Configuration = new XmlLoggingConfiguration(path, false);
-        } 
-#endregion
+        }
+        #endregion
 
         static void Main(string[] args)
         {
@@ -142,8 +142,20 @@
             var tasks = new List<Task>();
 
             //Set bookmark test
-            //Here waits the code!!!
             var bookmark = app.GetBookmarkAsync("demobookmark").Result;
+
+            //evaluate request
+            var request = JObject.FromObject(new
+            {
+                qExpression = "'$(vCurrentYear)'"
+            });
+
+            //Use this Overload from EvaluateExAsync it works fine.
+            var result = app.EvaluateExAsync(request).Result;
+
+            //Use this Overload it crashes!!!
+            result = app.EvaluateExAsync("'$(vCurrentYear)'").Result;
+
 
             //Caluculation Test
             var calc = new CalculationExample(app);
@@ -164,6 +176,10 @@
             ////find list object data
             var listObjectExample = new ListObjectExample(app);
             tasks.Add(listObjectExample.ListListObjectDataAsync());
+
+            ////Fire Multiple Requests
+            var multipleRequestsExample = new MultipleRequests(app);
+            tasks.Add(multipleRequestsExample.FireMultipleRequestsAsync());
 
             Task.WaitAll(tasks.ToArray());
 

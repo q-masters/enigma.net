@@ -1,0 +1,11 @@
+#commit-message-incrementing: Disabled
+# next-version: 5.12.0
+#branches:
+#  develop:
+#    prevent-increment-of-merged-branch-version: true
+#    regex: dev(elop)?(ment)?$
+#    tag: alpha
+#    tracks-release-branches: false
+#    track-merge-target: false
+#    is-release-branch: false
+#    is-mainline: false
