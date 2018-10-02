@@ -92,7 +92,7 @@ namespace SenseDesktop
             #endregion
             foreach (var request in requests)
             {
-                App.CreateSessionObjectAsync(request)
+                await App.CreateSessionObjectAsync(request)
                     .ContinueWith((res) =>
                     {
                         Console.WriteLine($"SesionObject for for {request["qProp"]["qInfo"]["qType"]} created");

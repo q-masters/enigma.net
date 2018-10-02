@@ -1,16 +1,16 @@
 ﻿namespace enigma
-{    
+{
     #region Usings
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
     using System;
     using System.Collections.Generic;
     using System.Dynamic;
-    using System.Text;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Linq;
-    using Newtonsoft.Json.Linq;  
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
+    using ImpromptuInterface;
     #endregion
 
     #region IObjectInterface
@@ -23,6 +23,7 @@
         event EventHandler Changed;
         event EventHandler Closed;
         void OnChanged();
+        void OnClosed();
     } 
     #endregion
 
@@ -106,8 +107,8 @@
                             {
                                 var objectResult = qReturn.ToObject<ObjectResult>();
                                 var newObj = new GeneratedAPI(objectResult, session);
-                                session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
-                                IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
+                                session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));                                
+                                IObjectInterface ia = newObj.ActLike(gArgs);
                                 tcs.SetResult(ia);
                             }
                             catch (Exception ex)
@@ -304,7 +305,6 @@
 
                     if (item == null)
                         break;
-
                     
                     var oo = JsonConvert.SerializeObject(item,
                           Newtonsoft.Json.Formatting.None,
@@ -313,14 +313,6 @@
                               NullValueHandling = NullValueHandling.Ignore,
                           });
                     jArray.Add(JToken.Parse(oo));
-                    //if (item is Object)
-                    //{
-                    //    var jj = JObject.FromObject(item);
-                    //    jArray.Add(jj);
-                    //}
-                    //else
-                    //   .Add(item);
-
                 }
                 jToken = jArray;
             }

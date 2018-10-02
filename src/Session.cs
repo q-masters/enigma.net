@@ -169,6 +169,9 @@
                                            if (result.IsCanceled)
                                                sr.tcs.SetCanceled();
                                        })
+#if NET452
+                                  .Wait(sr.ct)
+#endif
                                        ;
                         }
                     }
