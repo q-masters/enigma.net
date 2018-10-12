@@ -1,5 +1,5 @@
 #commit-message-incrementing: Disabled
-# next-version: 5.12.0
+next-version: 0.14.0
 #branches:
 #  develop:
 #    prevent-increment-of-merged-branch-version: true
