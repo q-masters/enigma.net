@@ -138,9 +138,10 @@
             //    });
 
             //Thread.Sleep(3000);
+            var example = new ChangeEventsExample(app);
+            example.RunExample();
 
             var tasks = new List<Task>();
-
             //Set bookmark test
             var bookmark = app.GetBookmarkAsync("demobookmark").Result;
 
@@ -189,7 +190,7 @@
             dynamic jsonObject = task6.Result;
             foreach (var item in jsonObject[0].qMatrix)
             {
-                Console.WriteLine(item[0]?.qText);
+                Console.WriteLine(item[0]?.qText + "");
             }
 
             Console.WriteLine("Finish");
