@@ -212,7 +212,7 @@
                     } while (!result.EndOfMessage);
 
                     var response = Encoding.UTF8.GetString(buffer, 0, writeSegment.Offset);
-                    logger.Trace("Reponse" + response);                    
+                    logger.Trace("Reponse" + response);
                     try
                     {
                         var message = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(response);
@@ -229,7 +229,14 @@
                                 if (wkValues != null)
                                 {
                                     wkValues.TryGetTarget(out var generatedAPI);
-                                    generatedAPI?.OnChanged();
+                                    try
+                                    {
+                                        generatedAPI?.OnChanged();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.Error(ex);
+                                    }
                                 }
                             }
                         }
@@ -239,13 +246,19 @@
                             foreach (var item in message.Closed)
                             {
                                 logger.Trace($"Object Id: {item} closed.");
-                                GeneratedApiObjects.TryRemove(item, out var wkValues);                                
+                                GeneratedApiObjects.TryRemove(item, out var wkValues);
                                 wkValues.TryGetTarget(out var generatedAPI);
-                                generatedAPI?.OnClosed();
+                                try
+                                {
+                                    generatedAPI?.OnClosed();
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.Error(ex);
+                                }
                             }
                         }
                     }
-
                     catch (Exception ex)
                     {
                         logger.Error(ex);
@@ -254,7 +267,7 @@
             }
             catch (Exception ex)
             {
-                logger.Error(ex);                
+                logger.Error(ex);
             }
         }
         #endregion

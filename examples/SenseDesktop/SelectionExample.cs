@@ -48,7 +48,7 @@
                     var list = ret.qSelectionObject;
                     foreach (var qitem in list.qSelections)
                     {
-                        logger.Info($"Field: {qitem.qInfo.qField} Selected: {qitem.qMeta.qSelected}");
+                        logger.Info($"Field: {qitem.qField} Selected: {qitem.qSelected}");
                     }
                 });
 

@@ -106,10 +106,9 @@
                             try
                             {
                                 var objectResult = qReturn.ToObject<ObjectResult>();
-                                var newObj = new GeneratedAPI(objectResult, session);
-                                session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));                                
-                                IObjectInterface ia = newObj.ActLike(gArgs);
-                                tcs.SetResult(ia);
+                                var newObj = new GeneratedAPI(objectResult, session, gArgs);                                                                
+                                session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
+                                tcs.SetResult(newObj.ProxyClass);
                             }
                             catch (Exception ex)
                             {
@@ -178,7 +177,7 @@
     /// <summary>
     /// Generated API Object on the Engine side, tracked by qHandle
     /// </summary>
-    public class GeneratedAPI : DynamicObject, IObjectInterface
+    public class GeneratedAPI : DynamicObject
     {
         #region Variables & Properties
         /// <summary>
@@ -205,6 +204,11 @@
         /// The current enigma Session for this Generated API Object
         /// </summary>
         public Session Session { get; private set; }
+
+        /// <summary>
+        /// The possible ProxyClass
+        /// </summary>
+        public object ProxyClass { get; private set; }
         #endregion
 
         #region Events
@@ -223,7 +227,7 @@
         /// </summary>
         public void OnChanged()
         {
-            Changed?.Invoke(this, new EventArgs());
+            Changed?.Invoke(ProxyClass ?? this, new EventArgs());
         }
 
         /// <summary>
@@ -231,7 +235,7 @@
         /// </summary>
         public void OnClosed()
         {
-            Closed?.Invoke(this, new EventArgs());
+            Closed?.Invoke(ProxyClass ?? this, new EventArgs());
         }
         #endregion
 
@@ -241,23 +245,26 @@
         /// </summary>
         /// <param name="objectResult">The properties for this Generated API Object</param>
         /// <param name="session">The current enigma Session for this Generated API Object</param>
-        internal GeneratedAPI(ObjectResult objectResult, Session session)
+        /// <param name="proxyType">Optional a proxyType</param>
+        internal GeneratedAPI(ObjectResult objectResult, Session session, Type proxyType= null)
         {
             this.qGenericId = objectResult.QGenericId;
             this.qType = objectResult.QType;
             this.qGenericId = objectResult.QGenericType;
             this.qHandle = objectResult.QHandle;
             this.Session = session;
+
+            if (proxyType != null)
+            {               
+                this.ProxyClass = Impromptu.DynamicActLike(this, proxyType);
+            }
+            else
+                this.ProxyClass = null;
         }        
         #endregion
 
         #region Dynamic Methods        
 #pragma warning disable 1591 // no XML Comment Warning for override
-        public override bool TryConvert(ConvertBinder binder, out object result)
-        {
-            return base.TryConvert(binder, out result);
-        }
-
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             if (Session == null)

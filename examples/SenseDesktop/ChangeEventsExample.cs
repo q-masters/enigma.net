@@ -81,11 +81,10 @@ namespace SenseDesktop
         public void CachedCurrentSelection_Changed(object sender, EventArgs e)
         {
             var obj = sender as IGenericObject;
+            Console.WriteLine(obj.ToString());
             //this cast should work!! So GetLayout can be called.
-            obj.GetLayoutAsync().Wait();
-
+       //     obj.GetLayoutAsync().Wait();
         }
-
 
         private IGenericObject CreateListBox(IDoc appIDoc, string FieldName)
         {
