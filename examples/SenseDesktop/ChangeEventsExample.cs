@@ -63,7 +63,7 @@ namespace SenseDesktop
                                    {
                                        ts.Result.Changed += CachedCurrentSelection_Changed;
                                        Console.WriteLine("Call manualy");
-                                       //CachedCurrentSelection_Changed(ts.Result, new SelectionEventArgs() { State = stateToAdd });
+                                       CachedCurrentSelection_Changed(ts.Result, new SelectionEventArgs() { State = stateToAdd });
                                    }
                                }
                            }).Wait();

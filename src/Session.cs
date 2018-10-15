@@ -186,6 +186,7 @@
         }
 
         #region ReceiveLoopAsync
+#pragma warning disable CS4014 
         private async void ReceiveLoopAsync(CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[4096 * 8];
@@ -229,14 +230,18 @@
                                 if (wkValues != null)
                                 {
                                     wkValues.TryGetTarget(out var generatedAPI);
-                                    try
+                                    Task.Run(() =>
                                     {
-                                        generatedAPI?.OnChanged();
+                                        try
+                                        {
+                                            generatedAPI?.OnChanged();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            logger.Error(ex);
+                                        }
                                     }
-                                    catch (Exception ex)
-                                    {
-                                        logger.Error(ex);
-                                    }
+                                    );
                                 }
                             }
                         }
@@ -248,14 +253,17 @@
                                 logger.Trace($"Object Id: {item} closed.");
                                 GeneratedApiObjects.TryRemove(item, out var wkValues);
                                 wkValues.TryGetTarget(out var generatedAPI);
-                                try
+                                Task.Run(() =>
                                 {
-                                    generatedAPI?.OnClosed();
-                                }
-                                catch (Exception ex)
-                                {
-                                    logger.Error(ex);
-                                }
+                                    try
+                                    {
+                                        generatedAPI?.OnClosed();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.Error(ex);
+                                    }
+                                });
                             }
                         }
                     }
@@ -270,7 +278,8 @@
                 logger.Error(ex);
             }
         }
+#pragma warning restore CS4014 
         #endregion
-    } 
+    }
     #endregion
 }
