@@ -62,7 +62,8 @@ namespace SenseDesktop
                                    if (CachedCurrentSelection.TryAdd(stateToAdd, ts.Result))
                                    {
                                        ts.Result.Changed += CachedCurrentSelection_Changed;
-                                       CachedCurrentSelection_Changed(ts.Result, new SelectionEventArgs() { State = stateToAdd });
+                                       Console.WriteLine("Call manualy");
+                                       //CachedCurrentSelection_Changed(ts.Result, new SelectionEventArgs() { State = stateToAdd });
                                    }
                                }
                            }).Wait();
@@ -83,7 +84,7 @@ namespace SenseDesktop
             var obj = sender as IGenericObject;
             Console.WriteLine(obj.ToString());
             //this cast should work!! So GetLayout can be called.
-       //     obj.GetLayoutAsync().Wait();
+            obj.GetLayoutAsync().Wait();
         }
 
         private IGenericObject CreateListBox(IDoc appIDoc, string FieldName)
