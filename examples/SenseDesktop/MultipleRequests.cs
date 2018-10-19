@@ -50,7 +50,6 @@ namespace SenseDesktop
                     qBookmarkListDef = new
                     {
                         qType = "bookmark"
-
                     }
                 }
             }));

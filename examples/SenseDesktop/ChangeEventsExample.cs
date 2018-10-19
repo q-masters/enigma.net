@@ -9,11 +9,6 @@ using System.Threading.Tasks;
 
 namespace SenseDesktop
 {
-    public class SelectionEventArgs : EventArgs
-    {
-        public string State { get; set; }
-    }
-
     public class ChangeEventsExample : BaseExample
     {
         private ConcurrentDictionary<string, IGenericObject> CachedCurrentSelection = null;
@@ -62,7 +57,7 @@ namespace SenseDesktop
                                    {
                                        ts.Result.Changed += CachedCurrentSelection_Changed;
                                        Console.WriteLine("Call manualy");
-                                       CachedCurrentSelection_Changed(ts.Result, new SelectionEventArgs() { State = stateToAdd });
+                                       CachedCurrentSelection_Changed(ts.Result, new EventArgs());
                                    }
                                }
                            }).Wait();
