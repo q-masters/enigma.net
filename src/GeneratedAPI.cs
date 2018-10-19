@@ -13,20 +13,6 @@
     using ImpromptuInterface;
     #endregion
 
-    #region IObjectInterface
-    public interface IObjectInterface
-    {
-        string qType { get; set; }
-        int qHandle { get; set; }
-        string qGenericType { get; set; }
-        string qGenericId { get; set; }
-        event EventHandler Changed;
-        event EventHandler Closed;
-        void OnChanged();
-        void OnClosed();
-    } 
-    #endregion
-
     #region ObjectResult
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     internal class ObjectResult
@@ -122,6 +108,7 @@
                         {
                             object newRes = null;
                             JToken resultToken = null;
+                            
                             var results = message.Result.Children().ToList();
                             if (results.Count == 1)
                             {
@@ -180,6 +167,7 @@
     public class GeneratedAPI : DynamicObject
     {
         #region Variables & Properties
+#pragma warning disable IDE1006
         /// <summary>
         /// qGenericId of the engine object
         /// </summary>
@@ -199,6 +187,7 @@
         /// qHandle of the engine object
         /// </summary>
         public int qHandle { get; set; }
+#pragma warning restore IDE1006
 
         /// <summary>
         /// The current enigma Session for this Generated API Object
@@ -294,7 +283,6 @@
                         jToken = JToken.Parse(innerString);
                         if (jToken.Type != JTokenType.Object && jToken.Type != JTokenType.Array)
                             jToken = null;
-
                     }
                     catch
                     {

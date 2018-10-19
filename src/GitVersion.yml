@@ -1,17 +1,4 @@
-# commit-message-incrementing: Disabled
-# next-version: 0.1
-branches:
-  develop:
-    prevent-increment-of-merged-branch-version: false
-    regex: dev(elop)?(ment)?$
-    tag: beta        
-    source-branches: [development]
-#    tracks-release-branches: false
-#    track-merge-target: true
-#    is-release-branch: false
-#    is-mainline: false
-
 ignore:
   sha:
-    - 06c5b5a7506f73620b0da911bff8866113df993fX
-#  commits-before: 2018-10-10T00:00:00
+    - 06c5b5a7506f73620b0da911bff8866113df993f
+#  regex: dependabot

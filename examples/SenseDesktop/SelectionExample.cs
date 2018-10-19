@@ -51,7 +51,6 @@
                         logger.Info($"Field: {qitem.qField} Selected: {qitem.qSelected}");
                     }
                 });
-
             }
             catch (Exception ex)
             {

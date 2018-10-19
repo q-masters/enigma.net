@@ -18,7 +18,7 @@
     {
         public static dynamic Original(this IObjectInterface @this)
         {            
-            return ((IActLikeProxy)@this)?.Original; ;
+            return ((IActLikeProxy)@this)?.Original;
         }
     }
 

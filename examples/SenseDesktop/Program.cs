@@ -117,7 +117,6 @@
             //Use this Overload it crashes!!!
             result = app.EvaluateExAsync("'$(vCurrentYear)'").Result;
 
-
             //Caluculation Test
             var calc = new CalculationExample(app);
             calc.CalcRandom(1);

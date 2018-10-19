@@ -49,7 +49,6 @@ namespace SenseDesktop
                                    qSelectionObjectDef = new
                                    {
                                        qStateName = stateToAdd
-
                                    }
                                }
                            });

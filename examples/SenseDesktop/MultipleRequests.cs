@@ -64,8 +64,7 @@ namespace SenseDesktop
                     },
                     qSelectionObjectDef = new
                     {
-                        qStateName = "$"
-
+                        qStateName = "$"                    
                     }
                 }
             }));

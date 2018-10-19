@@ -217,9 +217,14 @@
                     try
                     {
                         var message = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(response);
+                     
                         OpenRequests.TryRemove(message.Id, out var tcs);
-
-                        tcs?.SetResult(message.Result);
+                        if (message.Error != null)
+                        {
+                           tcs?.SetException(new Exception(message.Error?.ToString()));
+                        }
+                        else
+                            tcs?.SetResult(message.Result);
 
                         if (message?.Change != null)
                         {

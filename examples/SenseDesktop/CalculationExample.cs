@@ -34,8 +34,8 @@ namespace SenseDesktop
                 Task.WaitAll(taskList.ToArray());
             }
             catch (Exception ex)
-            {
-                throw new Exception($"The method {nameof(CalcRandom)} was failed.", ex);
+            {                
+                logger.Error(ex, $"***** The method {nameof(CalcRandom)} was failed.", ex);
             }
         }
     }
