@@ -22,17 +22,16 @@ namespace SenseDesktop
             {
                 var number1 = new Random().Next(0, 10000);
                 var number2 = new Random().Next(0, 10000);
-                var taskList = new List<Task<FieldValue>>();
+                var taskList = new List<Task>();
                 Parallel.For(1, count, index =>
                 {
                     logger.Info($"Start task {index}");
                     var task = App.EvaluateExAsync($"{number1}+{number2}");
                     taskList.Add(task);
+                    taskList.Add(App.AbortModalAsync(false));
                 });
 
                 Task.WaitAll(taskList.ToArray());
-                foreach (var task in taskList)
-                    logger.Info($"{task.Result.qText}");
             }
             catch (Exception ex)
             {
