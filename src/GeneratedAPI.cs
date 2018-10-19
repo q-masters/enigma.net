@@ -1,29 +1,16 @@
 ﻿namespace enigma
-{    
+{
     #region Usings
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
     using System;
     using System.Collections.Generic;
     using System.Dynamic;
-    using System.Text;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Linq;
-    using Newtonsoft.Json.Linq;  
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
-    #endregion
-
-    #region IObjectInterface
-    public interface IObjectInterface
-    {
-        string qType { get; set; }
-        int qHandle { get; set; }
-        string qGenericType { get; set; }
-        string qGenericId { get; set; }
-        event EventHandler Changed;
-        event EventHandler Closed;
-        void OnChanged();
-    } 
+    using ImpromptuInterface;
     #endregion
 
     #region ObjectResult
@@ -105,10 +92,9 @@
                             try
                             {
                                 var objectResult = qReturn.ToObject<ObjectResult>();
-                                var newObj = new GeneratedAPI(objectResult, session);
+                                var newObj = new GeneratedAPI(objectResult, session, gArgs);                                                                
                                 session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
-                                IObjectInterface ia = ImpromptuInterface.Impromptu.ActLike(newObj, gArgs);
-                                tcs.SetResult(ia);
+                                tcs.SetResult(newObj.ProxyClass);
                             }
                             catch (Exception ex)
                             {
@@ -122,6 +108,7 @@
                         {
                             object newRes = null;
                             JToken resultToken = null;
+                            
                             var results = message.Result.Children().ToList();
                             if (results.Count == 1)
                             {
@@ -177,9 +164,10 @@
     /// <summary>
     /// Generated API Object on the Engine side, tracked by qHandle
     /// </summary>
-    public class GeneratedAPI : DynamicObject, IObjectInterface
+    public class GeneratedAPI : DynamicObject
     {
         #region Variables & Properties
+#pragma warning disable IDE1006
         /// <summary>
         /// qGenericId of the engine object
         /// </summary>
@@ -199,11 +187,17 @@
         /// qHandle of the engine object
         /// </summary>
         public int qHandle { get; set; }
+#pragma warning restore IDE1006
 
         /// <summary>
         /// The current enigma Session for this Generated API Object
         /// </summary>
         public Session Session { get; private set; }
+
+        /// <summary>
+        /// The possible ProxyClass
+        /// </summary>
+        public object ProxyClass { get; private set; }
         #endregion
 
         #region Events
@@ -222,7 +216,7 @@
         /// </summary>
         public void OnChanged()
         {
-            Changed?.Invoke(this, new EventArgs());
+            Changed?.Invoke(ProxyClass ?? this, new EventArgs());
         }
 
         /// <summary>
@@ -230,7 +224,7 @@
         /// </summary>
         public void OnClosed()
         {
-            Closed?.Invoke(this, new EventArgs());
+            Closed?.Invoke(ProxyClass ?? this, new EventArgs());
         }
         #endregion
 
@@ -240,23 +234,26 @@
         /// </summary>
         /// <param name="objectResult">The properties for this Generated API Object</param>
         /// <param name="session">The current enigma Session for this Generated API Object</param>
-        internal GeneratedAPI(ObjectResult objectResult, Session session)
+        /// <param name="proxyType">Optional a proxyType</param>
+        internal GeneratedAPI(ObjectResult objectResult, Session session, Type proxyType= null)
         {
             this.qGenericId = objectResult.QGenericId;
             this.qType = objectResult.QType;
             this.qGenericId = objectResult.QGenericType;
             this.qHandle = objectResult.QHandle;
             this.Session = session;
+
+            if (proxyType != null)
+            {               
+                this.ProxyClass = Impromptu.DynamicActLike(this, proxyType);
+            }
+            else
+                this.ProxyClass = null;
         }        
         #endregion
 
         #region Dynamic Methods        
 #pragma warning disable 1591 // no XML Comment Warning for override
-        public override bool TryConvert(ConvertBinder binder, out object result)
-        {
-            return base.TryConvert(binder, out result);
-        }
-
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             if (Session == null)
@@ -286,7 +283,6 @@
                         jToken = JToken.Parse(innerString);
                         if (jToken.Type != JTokenType.Object && jToken.Type != JTokenType.Array)
                             jToken = null;
-
                     }
                     catch
                     {
@@ -304,7 +300,6 @@
 
                     if (item == null)
                         break;
-
                     
                     var oo = JsonConvert.SerializeObject(item,
                           Newtonsoft.Json.Formatting.None,
@@ -313,14 +308,6 @@
                               NullValueHandling = NullValueHandling.Ignore,
                           });
                     jArray.Add(JToken.Parse(oo));
-                    //if (item is Object)
-                    //{
-                    //    var jj = JObject.FromObject(item);
-                    //    jArray.Add(jj);
-                    //}
-                    //else
-                    //   .Add(item);
-
                 }
                 jToken = jArray;
             }

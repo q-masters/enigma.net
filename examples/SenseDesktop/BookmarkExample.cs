@@ -13,15 +13,6 @@
     using ImpromptuInterface;
     #endregion
 
-    // in einen anderen Namespace packen, so dass man es sich hinzufügen kann.
-    public static class GeneratedAPIExtensions
-    {
-        public static dynamic Original(this IObjectInterface @this)
-        {            
-            return ((IActLikeProxy)@this)?.Original; ;
-        }
-    }
-
     public class BookmarkExample : BaseExample
     {
         #region Logger

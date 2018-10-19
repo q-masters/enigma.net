@@ -19,47 +19,53 @@
 
         public ListObjectExample(IDoc app) : base(app) { }
 
+        private static JObject CreateProperties(string filterText)
+        {
+            if (String.IsNullOrEmpty(filterText))
+                filterText = "Region";
+
+            // Define the Properties as JSON from a anonymous class
+            var request = JObject.FromObject(new
+            {
+                qProp = new
+                {
+                    qInfo = new
+                    {
+                        qType = "ListObject"
+                    },
+                    qListObjectDef = new
+                    {
+                        qInitialDataFetch = new List<NxPage>
+                        {
+                            new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
+                        },
+                        qDef = new
+                        {
+                            qFieldDefs = new List<string>
+                            {
+                                filterText,
+                            },
+                            qFieldLabels = new List<string>
+                            {
+                                Guid.NewGuid().ToString(),
+                            },
+                            qSortCriterias = new List<SortCriteria>
+                            {
+                                new SortCriteria() { qSortByState = 1 },
+                            }
+                        },
+                        qShowAlternatives = false,
+                    }
+                }
+            });
+            return request;
+        }
+
         public async Task ListListObjectDataAsync(string filterText = null)
         {
             try
             {
-                if (String.IsNullOrEmpty(filterText))
-                    filterText = "Region";
-
-                // Define the Properties as JSON from a anonymous class
-                var request = JObject.FromObject(new
-                {
-                    qProp = new
-                    {
-                        qInfo = new
-                        {
-                            qType = "ListObject"
-                        },
-                        qListObjectDef = new
-                        {
-                            qInitialDataFetch = new List<NxPage>
-                        {
-                            new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
-                        },
-                            qDef = new
-                            {
-                                qFieldDefs = new List<string>
-                            {
-                                filterText,
-                            },
-                                qFieldLabels = new List<string>
-                            {
-                                Guid.NewGuid().ToString(),
-                            },
-                                qSortCriterias = new List<SortCriteria>
-                            {
-                                new SortCriteria() { qSortByState = 1 },
-                            }
-                            },
-                            qShowAlternatives = false,
-                        }
-                    }
-                });
+                JObject request = CreateProperties(filterText);
 
                 await App.CreateSessionObjectAsync(request)
                 .ContinueWith((res) =>
@@ -90,46 +96,12 @@
             }
         }
 
+
         public async Task<IGenericObject> GetGenericObjectAsync(string filterText = null)
         {
             try
             {
-                if (String.IsNullOrEmpty(filterText))
-                    filterText = "Region";
-
-                var request = JObject.FromObject(new
-                {
-                    qProp =  new
-                    {
-                        qInfo = new
-                        {
-                            qType = "ListObject"
-                        },
-                        qListObjectDef = new
-                        {
-                            qInitialDataFetch = new List<NxPage>
-                    {
-                        new NxPage() { qTop = 0, qHeight = 0, qLeft = 0, qWidth = 0 }
-                    },
-                            qDef = new
-                            {
-                                qFieldDefs = new List<string>
-                        {
-                            filterText,
-                        },
-                                qFieldLabels = new List<string>
-                        {
-                            Guid.NewGuid().ToString(),
-                        },
-                                qSortCriterias = new List<SortCriteria>
-                        {
-                            new SortCriteria() { qSortByState = 1 },
-                        }
-                            },
-                            qShowAlternatives = false,
-                        }
-                    }
-                });
+                JObject request = CreateProperties(filterText);
 
                 return await App.CreateSessionObjectAsync(request)
                 .ContinueWith<IGenericObject>((res) =>

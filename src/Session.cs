@@ -169,6 +169,9 @@
                                            if (result.IsCanceled)
                                                sr.tcs.SetCanceled();
                                        })
+#if NET452
+                                  .Wait(sr.ct)
+#endif
                                        ;
                         }
                     }
@@ -183,6 +186,7 @@
         }
 
         #region ReceiveLoopAsync
+#pragma warning disable CS4014 
         private async void ReceiveLoopAsync(CancellationToken cancellationToken)
         {
             byte[] buffer = new byte[4096 * 8];
@@ -209,13 +213,18 @@
                     } while (!result.EndOfMessage);
 
                     var response = Encoding.UTF8.GetString(buffer, 0, writeSegment.Offset);
-                    logger.Trace("Reponse" + response);                    
+                    logger.Trace("Reponse" + response);
                     try
                     {
                         var message = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(response);
+                     
                         OpenRequests.TryRemove(message.Id, out var tcs);
-
-                        tcs?.SetResult(message.Result);
+                        if (message.Error != null)
+                        {
+                           tcs?.SetException(new Exception(message.Error?.ToString()));
+                        }
+                        else
+                            tcs?.SetResult(message.Result);
 
                         if (message?.Change != null)
                         {
@@ -226,7 +235,18 @@
                                 if (wkValues != null)
                                 {
                                     wkValues.TryGetTarget(out var generatedAPI);
-                                    generatedAPI?.OnChanged();
+                                    Task.Run(() =>
+                                    {
+                                        try
+                                        {
+                                            generatedAPI?.OnChanged();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            logger.Error(ex);
+                                        }
+                                    }
+                                    );
                                 }
                             }
                         }
@@ -236,13 +256,22 @@
                             foreach (var item in message.Closed)
                             {
                                 logger.Trace($"Object Id: {item} closed.");
-                                GeneratedApiObjects.TryRemove(item, out var wkValues);                                
+                                GeneratedApiObjects.TryRemove(item, out var wkValues);
                                 wkValues.TryGetTarget(out var generatedAPI);
-                                generatedAPI?.OnClosed();
+                                Task.Run(() =>
+                                {
+                                    try
+                                    {
+                                        generatedAPI?.OnClosed();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.Error(ex);
+                                    }
+                                });
                             }
                         }
                     }
-
                     catch (Exception ex)
                     {
                         logger.Error(ex);
@@ -251,10 +280,11 @@
             }
             catch (Exception ex)
             {
-                logger.Error(ex);                
+                logger.Error(ex);
             }
         }
+#pragma warning restore CS4014 
         #endregion
-    } 
+    }
     #endregion
 }

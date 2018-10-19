@@ -42,62 +42,22 @@
         }
         #endregion
 
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         static void Main(string[] args)
         {
-            Logger logger = LogManager.GetCurrentClassLogger();
-
             SetLoggerSettings("App.config");
             logger.Info("Start");
 
-            var config = new EnigmaConfigurations()
-            {
-                Url = "ws://127.0.0.1:4848/app/engineData/",
+            //Result exception in TryConvert.
+            var app = CreateConnection("Executive Dashboard");
+            var mytasks = new List<Task>();
+            var ce1 = new CalculationExample(app);
+            ce1.CalcRandom(120);
 
-                //if you want to create your own Connection with for example header / cookies, just inject this in line
-                //CreateSocket = async (url) =>
-                //{
-                //    var ws = new ClientWebSocket();
-                //    !!!!!!!!! here you can inject your cookie, header authentification,...
-                //    await ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                //    return ws;
-                //}
-            };
+            Task.WaitAll(mytasks.ToArray());
 
-            var session = Enigma.Create(config);
-
-            // connect to the engine
-            var globalTask = session.OpenAsync();
-            globalTask.Wait();
-
-            dynamic globalDyn = (GeneratedAPI)globalTask.Result;
-
-            //// full work with Dynamic
-            //((Task<dynamic>)globalDyn.EngineVersion())
-            //.ContinueWith((res) =>
-            //{
-            //    Console.WriteLine("EngineVER1: " + res.Result.qComponentVersion.ToString());
-            //});
-
-            //// show that all functions can be called with Async or without Async
-            //((Task<dynamic>)globalDyn.EngineVersionAsync())
-            //.ContinueWith((res) =>
-            //{
-            //    Console.WriteLine("EngineVER2: " + res.Result.qComponentVersion.ToString());
-            //});
-
-            //// even with small letter like enigma.js is possible
-            //((Task<dynamic>)globalDyn.engineVersion())
-            //.ContinueWith((res) =>
-            //{
-            //    Console.WriteLine("EngineVER3: " + res.Result.qComponentVersion.ToString());
-            //});
-
-            //// now with cool full type support
-            IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
-            var appName = Path.GetFileName("%USERPROFILE%\\Documents\\Qlik\\Sense\\Apps\\Executive Dashboard.qvf");
-            var app = global.OpenDocAsync(appName).Result;
-
-            var kk = global.ProductVersionAsync().Result;
+            var count = mytasks.Count;
 
             //global.EngineVersionAsync()
             //    .ContinueWith((engVer) =>
@@ -138,9 +98,10 @@
             //    });
 
             //Thread.Sleep(3000);
+            var example = new ChangeEventsExample(app);
+            example.RunExample();
 
             var tasks = new List<Task>();
-
             //Set bookmark test
             var bookmark = app.GetBookmarkAsync("demobookmark").Result;
 
@@ -155,7 +116,6 @@
 
             //Use this Overload it crashes!!!
             result = app.EvaluateExAsync("'$(vCurrentYear)'").Result;
-
 
             //Caluculation Test
             var calc = new CalculationExample(app);
@@ -189,7 +149,7 @@
             dynamic jsonObject = task6.Result;
             foreach (var item in jsonObject[0].qMatrix)
             {
-                Console.WriteLine(item[0]?.qText);
+                Console.WriteLine(item[0]?.qText + "");
             }
 
             Console.WriteLine("Finish");
@@ -201,5 +161,39 @@
             Console.WriteLine("************* APP CHANGES *****************************");
         }
 
+        private static IDoc CreateConnection(string appName)
+        {
+            try
+            {
+                var config = new EnigmaConfigurations()
+                {
+                    Url = $"ws://127.0.0.1:4848/app/engineData/identity/{Guid.NewGuid()}",
+
+                    //if you want to create your own Connection with for example header / cookies, just inject this in line
+                    //CreateSocket = async (url) =>
+                    //{
+                    //    var ws = new ClientWebSocket();
+                    //    !!!!!!!!! here you can inject your cookie, header authentification,...
+                    //    await ws.ConnectAsync(new Uri(url), CancellationToken.None);
+                    //    return ws;
+                    //}
+                };
+
+                var session = Enigma.Create(config);
+
+                // connect to the engine
+                var globalTask = session.OpenAsync();
+                globalTask.Wait();
+
+                IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+                appName = SenseUtilities.GetFullAppName(appName);
+                return global.OpenDocAsync(appName).Result;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+                return null;
+            }
+        }
     }
 }
