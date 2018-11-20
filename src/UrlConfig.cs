@@ -67,5 +67,4 @@
         public int Ttl { get; set; } = 30;
         #endregion
     }
-
 }

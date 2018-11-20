@@ -102,7 +102,6 @@
             try
             {
                 JObject request = CreateProperties(filterText);
-
                 return await App.CreateSessionObjectAsync(request)
                 .ContinueWith<IGenericObject>((res) =>
                 {

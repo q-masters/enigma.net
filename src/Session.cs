@@ -73,10 +73,9 @@
         /// Eventually resolved when the websocket has been closed.
         /// </summary>
         /// <returns></returns>
-        public async Task CloseAsync()
-        {
-            throw new NotImplementedException();
-            //await new Task(() => { });
+        public async Task CloseAsync(CancellationToken? ct = null)
+        {            
+            await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None);            
         }
 
         /// <summary>
@@ -84,9 +83,8 @@
         /// </summary>
         /// <returns></returns>
         public async Task SuspendAsync()
-        {
-            throw new NotImplementedException();
-            //await new Task(() => { throw new NotSupportedException(); });
+        {            
+            await Task.Run(() => { throw new NotSupportedException(); });
         }
 
         /// <summary>
@@ -98,8 +96,7 @@
         /// <returns></returns>
         public async Task ResumedAsync(bool onlyIfAttached = false)
         {
-            throw new NotImplementedException();
-            //await new Task(() => { throw new NotSupportedException(); });
+            await Task.Run(() => { throw new NotSupportedException(); });
         }
         #endregion
 

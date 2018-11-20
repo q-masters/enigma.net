@@ -181,7 +181,7 @@
 
                 var session = Enigma.Create(config);
 
-                // connect to the engine
+                // connect to the engine                
                 var globalTask = session.OpenAsync();
                 globalTask.Wait();
 
