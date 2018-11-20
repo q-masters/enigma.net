@@ -74,7 +74,10 @@
         /// </summary>
         /// <returns></returns>
         public async Task CloseAsync(CancellationToken? ct = null)
-        {            
+        {
+            GeneratedApiObjects?.Clear();
+            OpenRequests?.Clear();
+            // ToDo add socket.Dispose & socket = null;
             await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None);            
         }
 

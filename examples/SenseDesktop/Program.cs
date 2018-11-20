@@ -186,7 +186,7 @@
                 globalTask.Wait();
 
                 IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
-                appName = SenseUtilities.GetFullAppName(appName);
+                appName = SenseUtilities.GetFullAppName(appName);                
                 return global.OpenDocAsync(appName).Result;
             }
             catch (Exception ex)
