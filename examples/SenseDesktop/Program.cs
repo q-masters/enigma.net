@@ -1,4 +1,5 @@
-﻿namespace SenseDesktop
+﻿
+namespace SenseDesktop
 {
     #region Usings
     using Dynamitey;
@@ -49,8 +50,42 @@
             SetLoggerSettings("App.config");
             logger.Info("Start");
 
+            Session session = null;
+            IDoc app = null;
             //Result exception in TryConvert.
-            var app = CreateConnection("Executive Dashboard");
+            try
+            {
+                var config = new EnigmaConfigurations()
+                {
+                    Url = $"ws://127.0.0.1:4848/app/engineData/identity/{Guid.NewGuid()}",
+
+                    //if you want to create your own Connection with for example header / cookies, just inject this in line
+                    //CreateSocket = async (url) =>
+                    //{
+                    //    var ws = new ClientWebSocket();
+                    //    !!!!!!!!! here you can inject your cookie, header authentification,...
+                    //    await ws.ConnectAsync(new Uri(url), CancellationToken.None);
+                    //    return ws;
+                    //}
+                };
+
+                session = Enigma.Create(config);
+
+                // connect to the engine                
+                var globalTask = session.OpenAsync();
+                globalTask.Wait();
+
+                IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
+                var appName = SenseUtilities.GetFullAppName("Executive Dashboard");
+                app= global.OpenDocAsync(appName).Result;
+                app.Closed += App_Closed;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+              
+            }
+               
             var mytasks = new List<Task>();
             var ce1 = new CalculationExample(app);
             ce1.CalcRandom(120);
@@ -136,14 +171,15 @@
             ////find list object data
             var listObjectExample = new ListObjectExample(app);
             tasks.Add(listObjectExample.ListListObjectDataAsync());
-
+            
             ////Fire Multiple Requests
             var multipleRequestsExample = new MultipleRequests(app);
             tasks.Add(multipleRequestsExample.FireMultipleRequestsAsync());
-
+            
             Task.WaitAll(tasks.ToArray());
 
             var task5 = listObjectExample.GetGenericObjectAsync("Region");
+            
             var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
 
             dynamic jsonObject = task6.Result;
@@ -151,49 +187,21 @@
             {
                 Console.WriteLine(item[0]?.qText + "");
             }
-
-            Console.WriteLine("Finish");
+            
+            Console.WriteLine("Finish");            
+            var _= session.CloseAsync();
             Console.ReadLine();
+        }
+
+        private static void App_Closed(object sender, EventArgs e)
+        {
+            Console.WriteLine("************* APP CLOSED *****************************");
         }
 
         private static void App_Changed(object sender, EventArgs e)
         {
             Console.WriteLine("************* APP CHANGES *****************************");
         }
-
-        private static IDoc CreateConnection(string appName)
-        {
-            try
-            {
-                var config = new EnigmaConfigurations()
-                {
-                    Url = $"ws://127.0.0.1:4848/app/engineData/identity/{Guid.NewGuid()}",
-
-                    //if you want to create your own Connection with for example header / cookies, just inject this in line
-                    //CreateSocket = async (url) =>
-                    //{
-                    //    var ws = new ClientWebSocket();
-                    //    !!!!!!!!! here you can inject your cookie, header authentification,...
-                    //    await ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                    //    return ws;
-                    //}
-                };
-
-                var session = Enigma.Create(config);
-
-                // connect to the engine                
-                var globalTask = session.OpenAsync();
-                globalTask.Wait();
-
-                IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
-                appName = SenseUtilities.GetFullAppName(appName);                
-                return global.OpenDocAsync(appName).Result;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex);
-                return null;
-            }
-        }
+          
     }
 }

@@ -5,6 +5,7 @@
     using System.Collections.Concurrent;
     using System.Collections.Generic;    
     using System.Net.WebSockets;
+	using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -75,10 +76,56 @@
         /// <returns></returns>
         public async Task CloseAsync(CancellationToken? ct = null)
         {
-            GeneratedApiObjects?.Clear();
-            OpenRequests?.Clear();
-            // ToDo add socket.Dispose & socket = null;
-            await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None);            
+            if (socket == null)
+                return;
+
+			 await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None)
+				.ContinueWith((res) =>
+                {
+                    try
+                    {
+                        foreach (var item in GeneratedApiObjects.Keys)
+                        {
+
+                            try
+                            {
+                                if (GeneratedApiObjects.TryRemove(item, out var value))
+                                {
+                                    if (value.TryGetTarget(out var target))
+                                        target.OnClosed();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error(ex);
+                            }
+                        }
+
+                        foreach (var item in OpenRequests.Keys)
+                        {
+                            try
+                            {
+                                if (OpenRequests.TryRemove(item, out var value))
+                                {
+                                    value.SetCanceled();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error(ex);
+                            }
+                        }
+
+                        while (!OpenSendRequest.IsEmpty) OpenSendRequest.TryDequeue(out var _);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                    }
+
+                    socket.Dispose();
+                    socket = null;
+                });
         }
 
         /// <summary>
@@ -129,7 +176,7 @@
                 var bt = Encoding.UTF8.GetBytes(json);
                 ArraySegment<byte> nm = new ArraySegment<byte>(bt);
                 OpenRequests.TryAdd(request.Id, tcs);
-                OpenSendRequest.Enqueue(new SendRequest() { ct = ct, tcs = tcs, message = nm });
+                OpenSendRequest.Enqueue(new SendRequest() { ct = ct, tcs = tcs, message = nm, id = request.Id });
             }
             catch (Exception ex)
             {
@@ -143,6 +190,7 @@
         internal class SendRequest
         {
             public ArraySegment<byte> message;
+			public int id;
             public CancellationToken ct;
             public TaskCompletionSource<JToken> tcs;
         }
@@ -153,7 +201,7 @@
         {
             try
             {
-                while (!cancellationToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested && socket != null && socket?.State == WebSocketState.Open)
                 {
                     while (!OpenSendRequest.IsEmpty)
                     {
@@ -162,9 +210,10 @@
                             socket.SendAsync(sr.message, WebSocketMessageType.Text, true, sr.ct)
                                   .ContinueWith(
                                        result =>
-                                       {
-                                            // todo Remove request.id from OpenRequests if faulted
-                                            if (result.IsFaulted)
+                                       {										  
+										   if (result.IsFaulted || result.IsCanceled)
+											   OpenRequests.TryRemove(sr.id, out var _);
+										   if (result.IsFaulted)
                                                sr.tcs.SetException(result.Exception);
                                            if (result.IsCanceled)
                                                sr.tcs.SetCanceled();
@@ -193,13 +242,13 @@
 
             try
             {
-                while (!cancellationToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested && socket != null && socket.State == WebSocketState.Open)
                 {
                     var writeSegment = new ArraySegment<byte>(buffer);
                     WebSocketReceiveResult result;
                     do
                     {
-                        result = await socket.ReceiveAsync(writeSegment, cancellationToken);
+                        result = await socket.ReceiveAsync(writeSegment, cancellationToken);                        
                         writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset + result.Count, writeSegment.Count - result.Count);
 
                         // check buffer overflow
@@ -217,58 +266,61 @@
                     try
                     {
                         var message = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(response);
-                     
-                        OpenRequests.TryRemove(message.Id, out var tcs);
-                        if (message.Error != null)
-                        {
-                           tcs?.SetException(new Exception(message.Error?.ToString()));
-                        }
-                        else
-                            tcs?.SetResult(message.Result);
 
-                        if (message?.Change != null)
+                        if (message != null)
                         {
-                            foreach (var item in message.Change)
+                            OpenRequests.TryRemove(message.Id, out var tcs);
+                            if (message.Error != null)
                             {
-                                logger.Trace($"Object Id: {item} changed.");
-                                GeneratedApiObjects.TryGetValue(item, out var wkValues);
-                                if (wkValues != null)
+                                tcs?.SetException(new Exception(message.Error?.ToString()));
+                            }
+                            else
+                                tcs?.SetResult(message.Result);
+
+                            if (message?.Change != null)
+                            {
+                                foreach (var item in message.Change)
                                 {
+                                    logger.Trace($"Object Id: {item} changed.");
+                                    GeneratedApiObjects.TryGetValue(item, out var wkValues);
+                                    if (wkValues != null)
+                                    {
+                                        wkValues.TryGetTarget(out var generatedAPI);
+                                        Task.Run(() =>
+                                        {
+                                            try
+                                            {
+                                                generatedAPI?.OnChanged();
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                logger.Error(ex);
+                                            }
+                                        }
+                                        );
+                                    }
+                                }
+                            }
+
+                            if (message?.Closed != null)
+                            {
+                                foreach (var item in message.Closed)
+                                {
+                                    logger.Trace($"Object Id: {item} closed.");
+                                    GeneratedApiObjects.TryRemove(item, out var wkValues);
                                     wkValues.TryGetTarget(out var generatedAPI);
                                     Task.Run(() =>
                                     {
                                         try
                                         {
-                                            generatedAPI?.OnChanged();
+                                            generatedAPI?.OnClosed();
                                         }
                                         catch (Exception ex)
                                         {
                                             logger.Error(ex);
                                         }
-                                    }
-                                    );
+                                    });
                                 }
-                            }
-                        }
-
-                        if (message?.Closed != null)
-                        {
-                            foreach (var item in message.Closed)
-                            {
-                                logger.Trace($"Object Id: {item} closed.");
-                                GeneratedApiObjects.TryRemove(item, out var wkValues);
-                                wkValues.TryGetTarget(out var generatedAPI);
-                                Task.Run(() =>
-                                {
-                                    try
-                                    {
-                                        generatedAPI?.OnClosed();
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        logger.Error(ex);
-                                    }
-                                });
                             }
                         }
                     }
