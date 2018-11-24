@@ -69,6 +69,59 @@
                 }, continuationOptions: TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
+        #region Helpers
+        private void CloseOpenRequests()
+        {
+            lock (OpenRequests)
+            {
+                foreach (var item in OpenRequests.Keys)
+                {
+                    try
+                    {
+                        if (OpenRequests.TryRemove(item, out var value))
+                        {
+                            value.SetCanceled();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                    }
+                }
+            }
+        }
+
+        private void ClearGeneratedApiObjects()
+        {
+            lock (GeneratedApiObjects)
+            {
+                foreach (var item in GeneratedApiObjects.Keys)
+                {
+                    try
+                    {
+                        if (GeneratedApiObjects.TryRemove(item, out var value))
+                        {
+                            if (value.TryGetTarget(out var target))
+                                target.OnClosed();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex);
+                    }
+                }
+            }
+        }
+
+        private void ClearSendRequests()
+        {
+            lock (OpenSendRequest)
+            {
+                while (!OpenSendRequest.IsEmpty) OpenSendRequest.TryDequeue(out var _);
+            }
+        } 
+        #endregion
+
         /// <summary>
         /// Closes the websocket and cleans up internal caches, also triggers the closed event on all generated APIs.
         /// Eventually resolved when the websocket has been closed.
@@ -78,45 +131,17 @@
         {
             if (socket == null)
                 return;
-
+            
 			 await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None)
 				.ContinueWith((res) =>
                 {
                     try
                     {
-                        foreach (var item in GeneratedApiObjects.Keys)
-                        {
+                        ClearGeneratedApiObjects();
 
-                            try
-                            {
-                                if (GeneratedApiObjects.TryRemove(item, out var value))
-                                {
-                                    if (value.TryGetTarget(out var target))
-                                        target.OnClosed();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Error(ex);
-                            }
-                        }
+                        CloseOpenRequests();
 
-                        foreach (var item in OpenRequests.Keys)
-                        {
-                            try
-                            {
-                                if (OpenRequests.TryRemove(item, out var value))
-                                {
-                                    value.SetCanceled();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Error(ex);
-                            }
-                        }
-
-                        while (!OpenSendRequest.IsEmpty) OpenSendRequest.TryDequeue(out var _);
+                        ClearSendRequests();
                     }
                     catch (Exception ex)
                     {
@@ -127,6 +152,7 @@
                     socket = null;
                 });
         }
+
 
         /// <summary>
         /// Suspends the enigma.js session by closing the websocket and rejecting all method calls until it has been resumed again.
@@ -227,6 +253,10 @@
 
                     Thread.Sleep(10);
                 }
+
+                CloseOpenRequests();                
+
+                ClearSendRequests();
             }
             catch (Exception ex)
             {
@@ -329,6 +359,8 @@
                         logger.Error(ex);
                     }
                 }
+
+                ClearGeneratedApiObjects();
             }
             catch (Exception ex)
             {
