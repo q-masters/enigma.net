@@ -94,7 +94,7 @@
                 internalCreateSocket = async (url) =>
                 {
                     var ws = new ClientWebSocket();           
-                    await ws.ConnectAsync(new Uri(url), ct);
+                    await ws.ConnectAsync(new Uri(url), ct).ConfigureAwait(false);
                     return ws;
                 };
             }

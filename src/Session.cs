@@ -66,7 +66,8 @@
                     var global = new GeneratedAPI(new ObjectResult() { QHandle = -1, QType = "Global" }, this);
                     GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));
                     return global;
-                }, continuationOptions: TaskContinuationOptions.OnlyOnRanToCompletion);
+                }, continuationOptions: TaskContinuationOptions.OnlyOnRanToCompletion)
+                .ConfigureAwait(false);
         }
 
         #region Helpers
@@ -131,26 +132,26 @@
         {
             if (socket == null)
                 return;
-            
-			 await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None)
-				.ContinueWith((res) =>
-                {
-                    try
-                    {
-                        ClearGeneratedApiObjects();
 
-                        CloseOpenRequests();
+            await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None)
+               .ContinueWith((res) =>
+               {
+                   try
+                   {
+                       ClearGeneratedApiObjects();
 
-                        ClearSendRequests();
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex);
-                    }
+                       CloseOpenRequests();
 
-                    socket.Dispose();
-                    socket = null;
-                });
+                       ClearSendRequests();
+                   }
+                   catch (Exception ex)
+                   {
+                       logger.Error(ex);
+                   }
+
+                   socket.Dispose();
+                   socket = null;
+               });
         }
 
 
