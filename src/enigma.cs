@@ -1,5 +1,5 @@
 ﻿namespace enigma
-{    
+{
     #region Usings
     using System;
     using System.Collections.Generic;
@@ -93,7 +93,7 @@
             {
                 internalCreateSocket = async (url) =>
                 {
-                    var ws = new ClientWebSocket();           
+                    var ws = new ClientWebSocket();
                     await ws.ConnectAsync(new Uri(url), ct).ConfigureAwait(false);
                     return ws;
                 };
@@ -118,6 +118,6 @@
         {
             return new Session(config);
         }
-    } 
+    }
     #endregion
 }

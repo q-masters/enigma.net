@@ -2,14 +2,6 @@
 namespace SenseDesktop
 {
     #region Usings
-    using Dynamitey;
-    using enigma;
-    using ImpromptuInterface;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using NLog;
-    using NLog.Config;
-    using Qlik.EngineAPI;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -20,6 +12,14 @@ namespace SenseDesktop
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
+    using Dynamitey;
+    using enigma;
+    using ImpromptuInterface;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using NLog;
+    using NLog.Config;
+    using Qlik.EngineAPI;
     #endregion
 
     class Program
@@ -58,34 +58,43 @@ namespace SenseDesktop
                 var config = new EnigmaConfigurations()
                 {
                     Url = $"ws://127.0.0.1:4848/app/engineData/identity/{Guid.NewGuid()}",
+                    //Url = $"wss://127.0.0.1/app/engineData/identity/{Guid.NewGuid()}",
 
-                    //if you want to create your own Connection with for example header / cookies, just inject this in line
-                    //CreateSocket = async (url) =>
-                    //{
-                    //    var ws = new ClientWebSocket();
-                    //    !!!!!!!!! here you can inject your cookie, header authentification,...
-                    //    await ws.ConnectAsync(new Uri(url), CancellationToken.None);
-                    //    return ws;
-                    //}
+                    // if you want to create your own Connection with for example header / cookies, just inject this in line
+                    CreateSocket = async (url) =>
+                    {
+                        var ws = new ClientWebSocket();
+#if NETCOREAPP2_1
+                        var ck = new CookieContainer();
+                        ck.Add(new Uri(url), new Cookie("X-Qlik-Session","xxxxxxxxx"));
+                        ws.Options.Cookies = ck;
+                        ws.Options.RemoteCertificateValidationCallback
+                            += new RemoteCertificateValidationCallback((object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => { return true; });
+#endif
+                        //!!!!!!!!!here you can inject your cookie, header authentification,...
+                        await ws.ConnectAsync(new Uri(url), CancellationToken.None);
+                        return ws;
+                    }
                 };
 
                 session = Enigma.Create(config);
-
-                // connect to the engine                
+                // connect to the engine
                 var globalTask = session.OpenAsync();
                 globalTask.Wait();
 
                 IGlobal global = Impromptu.ActLike<IGlobal>(globalTask.Result);
                 var appName = SenseUtilities.GetFullAppName("Executive Dashboard");
-                app= global.OpenDocAsync(appName).Result;
+                app = global.OpenDocAsync(appName).Result;
                 app.Closed += App_Closed;
             }
             catch (Exception ex)
             {
                 logger.Error(ex);
-              
+
             }
-               
+
+            Console.ReadLine();
+
             var mytasks = new List<Task>();
             var ce1 = new CalculationExample(app);
             ce1.CalcRandom(120);
@@ -171,15 +180,15 @@ namespace SenseDesktop
             ////find list object data
             var listObjectExample = new ListObjectExample(app);
             tasks.Add(listObjectExample.ListListObjectDataAsync());
-            
+
             ////Fire Multiple Requests
             var multipleRequestsExample = new MultipleRequests(app);
             tasks.Add(multipleRequestsExample.FireMultipleRequestsAsync());
-            
+
             Task.WaitAll(tasks.ToArray());
 
             var task5 = listObjectExample.GetGenericObjectAsync("Region");
-            
+
             var task6 = listObjectExample.GetListObjectDataAsync(task5.Result);
 
             dynamic jsonObject = task6.Result;
@@ -187,9 +196,9 @@ namespace SenseDesktop
             {
                 Console.WriteLine(item[0]?.qText + "");
             }
-            
-            Console.WriteLine("Finish");            
-            var _= session.CloseAsync();
+
+            Console.WriteLine("Finish");
+            var _ = session.CloseAsync();
             Console.ReadLine();
         }
 
@@ -202,6 +211,6 @@ namespace SenseDesktop
         {
             Console.WriteLine("************* APP CHANGES *****************************");
         }
-          
+
     }
 }

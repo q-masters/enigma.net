@@ -3,9 +3,9 @@
     #region Usings
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;    
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Net.WebSockets;
-	using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -27,12 +27,21 @@
         #region Variables / Properties
         internal ConcurrentDictionary<int, WeakReference<GeneratedAPI>> GeneratedApiObjects = new ConcurrentDictionary<int, WeakReference<GeneratedAPI>>();
         private ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
+        private ConcurrentQueue<SendRequest> OpenSendRequest = new ConcurrentQueue<SendRequest>();
 
         private ClientWebSocket socket = null;
 
         private EnigmaConfigurations config;
 
         private int requestID = 0;
+
+        internal class SendRequest
+        {
+            public ArraySegment<byte> message;
+            public int id;
+            public CancellationToken ct;
+            public TaskCompletionSource<JToken> tcs;
+        }
         #endregion
 
         #region Constructor
@@ -46,31 +55,21 @@
         }
         #endregion
 
-        #region Public Methods
+        #region RPCMethodCalled Event
         /// <summary>
-        /// Establishes the websocket against the configured URL.
-        /// Try to get the QIX global interface when the connection has been established.
+        /// Eventhandler to handle RPC Method calls from the server.
         /// </summary>
-        /// <returns></returns>
-        public async Task<dynamic> OpenAsync(CancellationToken? ct = null)
-        {
-            CancellationToken ct2 = ct ?? CancellationToken.None;
-            return await config.CreateSocketCall(ct2)
-                .ContinueWith((res) =>
-                {
-                    socket = res.Result;
-                    // Todo add here the global Cancelation Token that is
-                    // triggered from the CloseAsync
-                    this.ReceiveLoopAsync(ct2);
-                    Task.Run(() => { this.SendLoop(ct2); });
-                    var global = new GeneratedAPI(new ObjectResult() { QHandle = -1, QType = "Global" }, this);
-                    GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));
-                    return global;
-                }, continuationOptions: TaskContinuationOptions.OnlyOnRanToCompletion)
-                .ConfigureAwait(false);
-        }
+        /// <param name="sender">The sender object</param>
+        /// <param name="e">RPC Request Message</param>
+        public delegate void RPCMethodCalledHandler(object sender, JsonRpcRequestMessage e);
 
-        #region Helpers
+        /// <summary>
+        /// Occures if the server sends a RPC Method request.
+        /// </summary>
+        public event RPCMethodCalledHandler RPCMethodCalled;
+        #endregion
+
+        #region Close Helpers
         private void CloseOpenRequests()
         {
             lock (OpenRequests)
@@ -81,7 +80,7 @@
                     {
                         if (OpenRequests.TryRemove(item, out var value))
                         {
-                            value.SetCanceled();
+                            value?.SetCanceled();
                         }
                     }
                     catch (Exception ex)
@@ -102,8 +101,16 @@
                     {
                         if (GeneratedApiObjects.TryRemove(item, out var value))
                         {
-                            if (value.TryGetTarget(out var target))
-                                target.OnClosed();
+                            GeneratedAPI target = null;
+                            if (value?.TryGetTarget(out target) ?? false)
+                                _ = Task.Run(() =>
+                                {
+                                    try
+                                    {
+                                        target?.OnClosed();
+                                    }
+                                    catch { }
+                                });
                         }
                     }
                     catch (Exception ex)
@@ -120,9 +127,60 @@
             {
                 while (!OpenSendRequest.IsEmpty) OpenSendRequest.TryDequeue(out var _);
             }
-        } 
+        }
         #endregion
 
+        #region Public Methods
+        #region OpenAsync
+        /// <summary>
+        /// Establishes the websocket against the configured URL.
+        /// Try to get the QIX global interface when the connection has been established.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<dynamic> OpenAsync(CancellationToken? ctn = null)
+        {
+            if (socket != null)
+                await CloseAsync(ctn);
+
+            CancellationToken ct = ctn ?? CancellationToken.None;
+
+            socket = await config.CreateSocketCall(ct);
+
+            // Todo add here the global Cancelation Token that is
+            // triggered from the CloseAsync
+            bool? connected = null;
+
+            void RPCMethodCall(object sender, JsonRpcRequestMessage e)
+            {
+                if (e.Method == "OnAuthenticationInformation" && (bool?)e.Parameters["mustAuthenticate"] == true)
+                    connected = false;
+                if (e.Method == "OnConnected")
+                    connected = true;
+            };
+
+            RPCMethodCalled += RPCMethodCall;
+            StartReceiveLoop(ct);
+            while (connected == null && !ct.IsCancellationRequested)
+            {
+                Thread.Sleep(10);
+            }
+            RPCMethodCalled -= RPCMethodCall;
+
+            if (connected == false)
+            {
+                socket?.CloseAsync(WebSocketCloseStatus.InternalServerError, "", ct);
+                throw new Exception("Connection Error");
+            }
+
+            // start SendLoop only if connection is opened
+            StartSendLoop(ct);
+            var global = new GeneratedAPI(new ObjectResult() { QHandle = -1, QType = "Global" }, this);
+            GeneratedApiObjects.TryAdd(-1, new WeakReference<GeneratedAPI>(global));
+            return global;
+        }
+        #endregion
+
+        #region CloseAsync
         /// <summary>
         /// Closes the websocket and cleans up internal caches, also triggers the closed event on all generated APIs.
         /// Eventually resolved when the websocket has been closed.
@@ -133,40 +191,45 @@
             if (socket == null)
                 return;
 
-            await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None)
-               .ContinueWith((res) =>
-               {
-                   try
-                   {
-                       ClearGeneratedApiObjects();
+            await socket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct ?? CancellationToken.None);
 
-                       CloseOpenRequests();
+            try
+            {
+                ClearGeneratedApiObjects();
 
-                       ClearSendRequests();
-                   }
-                   catch (Exception ex)
-                   {
-                       logger.Error(ex);
-                   }
+                CloseOpenRequests();
 
-                   socket.Dispose();
-                   socket = null;
-               });
+                ClearSendRequests();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+
+            try
+            {
+                socket?.Dispose();
+                socket = null;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
         }
-
+        #endregion
 
         /// <summary>
         /// Suspends the enigma.js session by closing the websocket and rejecting all method calls until it has been resumed again.
         /// </summary>
         /// <returns></returns>
         public async Task SuspendAsync()
-        {            
+        {
             await Task.Run(() => { throw new NotSupportedException(); });
         }
 
         /// <summary>
         /// Resume a previously suspended enigma.js session by re-creating the websocket and, if possible, re-open the document as well as refreshing the internal caches. If successful, changed events will be triggered on all generated APIs, and on the ones it was unable to restore, the closed event will be triggered.
-        /// 
+        ///
         /// Eventually resolved when the websocket (and potentially the previously opened document, and generated APIs) has been restored, rejected when it fails any of those steps, or when onlyIfAttached is true and a new QIX Engine session was created.
         /// </summary>
         /// <param name="onlyIfAttached">onlyIfAttached can be used to only allow resuming if the QIX Engine session was reattached properly.</param>
@@ -199,7 +262,7 @@
                 {
                     logger.Error(ex);
                 }
-                logger.Trace("Send Request " + json);                
+                logger.Trace("Send Request " + json);
                 var bt = Encoding.UTF8.GetBytes(json);
                 ArraySegment<byte> nm = new ArraySegment<byte>(bt);
                 OpenRequests.TryAdd(request.Id, tcs);
@@ -207,168 +270,181 @@
             }
             catch (Exception ex)
             {
-                tcs.SetException(ex);                
+                tcs.SetException(ex);
             }
 
             return await tcs.Task;
         }
         #endregion
 
-        internal class SendRequest
+        #region SendLoop
+        private void StartSendLoop(CancellationToken cancellationToken)
         {
-            public ArraySegment<byte> message;
-			public int id;
-            public CancellationToken ct;
-            public TaskCompletionSource<JToken> tcs;
-        }
-
-        private ConcurrentQueue<SendRequest> OpenSendRequest = new ConcurrentQueue<SendRequest>();
-
-        private void SendLoop(CancellationToken cancellationToken)
-        {
-            try
+            _ = Task.Run(() =>
             {
-                while (!cancellationToken.IsCancellationRequested && socket != null && socket?.State == WebSocketState.Open)
+                try
                 {
-                    while (!OpenSendRequest.IsEmpty)
+                    while (!cancellationToken.IsCancellationRequested && socket != null && socket?.State == WebSocketState.Open)
                     {
-                        if (OpenSendRequest.TryDequeue(out SendRequest sr))
+                        while (!OpenSendRequest.IsEmpty)
                         {
-                            socket.SendAsync(sr.message, WebSocketMessageType.Text, true, sr.ct)
-                                  .ContinueWith(
-                                       result =>
-                                       {										  
-										   if (result.IsFaulted || result.IsCanceled)
-											   OpenRequests.TryRemove(sr.id, out var _);
-										   if (result.IsFaulted)
-                                               sr.tcs.SetException(result.Exception);
-                                           if (result.IsCanceled)
-                                               sr.tcs.SetCanceled();
-                                       })
+                            if (OpenSendRequest.TryDequeue(out SendRequest sr))
+                            {
+                                socket.SendAsync(sr.message, WebSocketMessageType.Text, true, sr.ct)
+                                      .ContinueWith(
+                                           result =>
+                                           {
+                                               if (result.IsFaulted || result.IsCanceled)
+                                                   OpenRequests.TryRemove(sr.id, out var _);
+                                               if (result.IsFaulted)
+                                                   sr.tcs.SetException(result.Exception);
+                                               if (result.IsCanceled)
+                                                   sr.tcs.SetCanceled();
+                                           })
 #if NET452
                                   .Wait(sr.ct)
 #endif
                                        ;
+                            }
                         }
+
+                        Thread.Sleep(10);
                     }
 
-                    Thread.Sleep(10);
+                    CloseOpenRequests();
+
+                    ClearSendRequests();
                 }
-
-                CloseOpenRequests();                
-
-                ClearSendRequests();
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex);
-            }
-        }
-
-        #region ReceiveLoopAsync
-#pragma warning disable CS4014 
-        private async void ReceiveLoopAsync(CancellationToken cancellationToken)
-        {
-            byte[] buffer = new byte[4096 * 8];
-
-            try
-            {
-                while (!cancellationToken.IsCancellationRequested && socket != null && socket.State == WebSocketState.Open)
+                catch (Exception ex)
                 {
-                    var writeSegment = new ArraySegment<byte>(buffer);
-                    WebSocketReceiveResult result;
-                    do
+                    logger.Error(ex);
+                }
+            });
+        }
+        #endregion
+
+        #region ReceiveLoop
+        private void StartReceiveLoop(CancellationToken cancellationToken)
+        {
+            _ = Task.Run(async () =>
+            {
+                byte[] buffer = new byte[4096 * 8];
+
+                #region Helper to Notify API Objects
+                void notifyGeneratedAPI(WeakReference<GeneratedAPI> wrGeneratedAPI, bool close)
+                {
+                    GeneratedAPI generatedAPI = null;
+                    wrGeneratedAPI?.TryGetTarget(out generatedAPI);
+                    if (generatedAPI != null)
                     {
-                        result = await socket.ReceiveAsync(writeSegment, cancellationToken);                        
-                        writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset + result.Count, writeSegment.Count - result.Count);
-
-                        // check buffer overflow
-                        if (!result.EndOfMessage && writeSegment.Count == 0)
+                        _ = Task.Run(() =>
                         {
-                            // autoIncreaseRecieveBuffer)
-                            Array.Resize(ref buffer, buffer.Length * 2);
-                            writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset, buffer.Length - writeSegment.Offset);
-                        }
-
-                    } while (!result.EndOfMessage);
-
-                    var response = Encoding.UTF8.GetString(buffer, 0, writeSegment.Offset);
-                    logger.Trace("Reponse" + response);
-                    try
-                    {
-                        var message = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(response);
-
-                        if (message != null)
-                        {
-                            OpenRequests.TryRemove(message.Id, out var tcs);
-                            if (message.Error != null)
+                            try
                             {
-                                tcs?.SetException(new Exception(message.Error?.ToString()));
+                                if (close)
+                                    generatedAPI?.OnClosed();
+                                else
+                                    generatedAPI?.OnChanged();
                             }
-                            else
-                                tcs?.SetResult(message.Result);
-
-                            if (message?.Change != null)
+                            catch (Exception ex)
                             {
-                                foreach (var item in message.Change)
+                                logger.Error(ex);
+                            }
+                        });
+                    }
+                }
+                #endregion
+
+                try
+                {
+                    while (!cancellationToken.IsCancellationRequested && socket != null && socket.State == WebSocketState.Open)
+                    {
+                        var writeSegment = new ArraySegment<byte>(buffer);
+                        WebSocketReceiveResult result;
+                        do
+                        {
+                            result = await socket.ReceiveAsync(writeSegment, cancellationToken);
+                            writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset + result.Count, writeSegment.Count - result.Count);
+
+                            // check buffer overflow
+                            if (!result.EndOfMessage && writeSegment.Count == 0)
+                            {
+                                // autoIncreaseRecieveBuffer)
+                                Array.Resize(ref buffer, buffer.Length * 2);
+                                writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset, buffer.Length - writeSegment.Offset);
+                            }
+
+                        } while (!result.EndOfMessage);
+
+                        var message = Encoding.UTF8.GetString(buffer, 0, writeSegment.Offset);
+                        logger.Trace("Reponse" + message);
+                        try
+                        {
+                            var responseMessage = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(message);
+
+                            if (responseMessage != null && (responseMessage.Result != null || responseMessage.Error != null))
+                            {
+                                OpenRequests.TryRemove(responseMessage.Id, out var tcs);
+                                if (responseMessage.Error != null)
                                 {
-                                    logger.Trace($"Object Id: {item} changed.");
-                                    GeneratedApiObjects.TryGetValue(item, out var wkValues);
-                                    if (wkValues != null)
+                                    tcs?.SetException(new Exception(responseMessage.Error?.ToString()));
+                                }
+                                else
+                                    tcs?.SetResult(responseMessage.Result);
+
+                                #region Notify Changed or Closed API Objects
+                                if (responseMessage?.Change != null)
+                                {
+                                    foreach (var item in responseMessage.Change)
                                     {
-                                        wkValues.TryGetTarget(out var generatedAPI);
-                                        Task.Run(() =>
-                                        {
-                                            try
-                                            {
-                                                generatedAPI?.OnChanged();
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                logger.Error(ex);
-                                            }
-                                        }
-                                        );
+                                        logger.Trace($"Object Id: {item} changed.");
+                                        GeneratedApiObjects.TryGetValue(item, out var wkValues);
+                                        notifyGeneratedAPI(wkValues, false);
                                     }
                                 }
-                            }
 
-                            if (message?.Closed != null)
-                            {
-                                foreach (var item in message.Closed)
+                                if (responseMessage?.Closed != null)
                                 {
-                                    logger.Trace($"Object Id: {item} closed.");
-                                    GeneratedApiObjects.TryRemove(item, out var wkValues);
-                                    wkValues.TryGetTarget(out var generatedAPI);
-                                    Task.Run(() =>
+                                    foreach (var item in responseMessage.Closed)
                                     {
-                                        try
-                                        {
-                                            generatedAPI?.OnClosed();
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            logger.Error(ex);
-                                        }
-                                    });
+                                        logger.Trace($"Object Id: {item} closed.");
+                                        GeneratedApiObjects.TryRemove(item, out var wkValues);
+                                        notifyGeneratedAPI(wkValues, true);
+                                    }
                                 }
+                                #endregion
+                            }
+                            else
+                            {
+                                var requestMessage = JsonConvert.DeserializeObject<JsonRpcRequestMessage>(message);
+                                if (requestMessage != null)
+                                    _ = Task.Run(() =>
+                                     {
+                                         try
+                                         {
+                                             this.RPCMethodCalled?.Invoke(this, requestMessage);
+                                         }
+                                         catch (Exception ex)
+                                         {
+                                             logger.Error(ex);
+                                         }
+                                     });
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex);
-                    }
-                }
 
-                ClearGeneratedApiObjects();
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex);
-            }
+                    ClearGeneratedApiObjects();
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex);
+                }
+            });
         }
-#pragma warning restore CS4014 
         #endregion
     }
     #endregion
