@@ -5,7 +5,12 @@ VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "enigma.net", "..\src\enigma.net.csproj", "{7180BFF9-C78B-4C72-9E60-D4D7116E2688}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests.csproj", "{4B8F6407-2C6F-45BA-9873-686BB71DB0D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tests", "tests.csproj", "{4B8F6407-2C6F-45BA-9873-686BB71DB0D6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0C9F4779-1896-45F1-ACC5-A2AA92409E1E}"
+	ProjectSection(SolutionItems) = preProject
+		..\.travis.yml = ..\.travis.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
