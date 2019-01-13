@@ -12,6 +12,7 @@ before_install:
 
 script:
   - dotnet --info
-  - dotnet restore ./examples/SenseDesktop
-  - dotnet build -p:noGitVersionTask=1 ./examples/SenseDesktop
-  - dotnet /examples/SenseDesktop/bin/Debug/netcoreapp2.1/SenseDesktop.dll
+  - cd ./tests
+  - dotnet restore
+  - dotnet build -p:noGitVersionTask=1
+  - dotnet test
