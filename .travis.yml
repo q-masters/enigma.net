@@ -14,4 +14,4 @@ script:
   - dotnet --info
   - dotnet restore ./examples/SenseDesktop
   - dotnet build ./examples/SenseDesktop
-  - dotnet run ./examples/SenseDesktop/bin/Release/netcoreapp2.1/SenseDesktop.dll
+  - dotnet run ./examples/SenseDesktop/bin/Debug/netcoreapp2.1/SenseDesktop.dll
