@@ -93,8 +93,6 @@ namespace SenseDesktop
 
             }
 
-            Console.ReadLine();
-
             var mytasks = new List<Task>();
             var ce1 = new CalculationExample(app);
             ce1.CalcRandom(120);
