@@ -14,6 +14,4 @@ script:
   - dotnet --info
   - dotnet restore ./examples/SenseDesktop
   - dotnet build -p:noGitVersionTask=1 ./examples/SenseDesktop
-  - cd /home/travis/build/q2g/enigma.net/examples/SenseDesktop/bin/Debug/netcoreapp2.1/
-  - ls -a
-  - dotnet /home/travis/build/q2g/enigma.net/examples/SenseDesktop/bin/Debug/netcoreapp2.1/SenseDesktop.dll
+  - dotnet /examples/SenseDesktop/bin/Debug/netcoreapp2.1/SenseDesktop.dll
