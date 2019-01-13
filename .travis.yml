@@ -14,5 +14,4 @@ script:
   - dotnet --info
   - cd ./tests
   - dotnet restore
-  - dotnet build -p:noGitVersionTask=1
   - dotnet test -p:noGitVersionTask=1
