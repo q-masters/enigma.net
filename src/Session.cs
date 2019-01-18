@@ -156,7 +156,7 @@
                     connected = false;
                 if (e.Method == "OnConnected")
                     connected = true;
-            };
+            }
 
             RPCMethodCalled += RPCMethodCall;
             StartReceiveLoop(ct);
@@ -373,7 +373,6 @@
                                 Array.Resize(ref buffer, buffer.Length * 2);
                                 writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset, buffer.Length - writeSegment.Offset);
                             }
-
                         } while (!result.EndOfMessage);
 
                         var message = Encoding.UTF8.GetString(buffer, 0, writeSegment.Offset);

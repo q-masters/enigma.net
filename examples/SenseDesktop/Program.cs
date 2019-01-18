@@ -1,5 +1,4 @@
-﻿
-namespace SenseDesktop
+﻿namespace SenseDesktop
 {
     #region Usings
     using System;
@@ -90,7 +89,6 @@ namespace SenseDesktop
             catch (Exception ex)
             {
                 logger.Error(ex);
-
             }
 
             var mytasks = new List<Task>();
@@ -209,6 +207,5 @@ namespace SenseDesktop
         {
             Console.WriteLine("************* APP CHANGES *****************************");
         }
-
     }
 }

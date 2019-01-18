@@ -96,7 +96,6 @@
             }
         }
 
-
         public async Task<IGenericObject> GetGenericObjectAsync(string filterText = null)
         {
             try

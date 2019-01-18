@@ -70,8 +70,6 @@ namespace tests
         //    doc.Changed -= Doc_Changed1;
         //}
 
-
-
         //[Fact]
         //public async Task ReloadTest()
         //{
@@ -86,7 +84,5 @@ namespace tests
 
         //    Assert.True(await global.IsDesktopModeAsync());
         //}
-
-
     }
 }
