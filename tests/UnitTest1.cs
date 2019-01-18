@@ -2,6 +2,7 @@ namespace tests
 {
     #region Usings
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using enigma;
     using ImpromptuInterface;
@@ -27,10 +28,10 @@ namespace tests
             global = Impromptu.ActLike<IGlobal>(globalTask);
 
             var appName = SenseUtilities.GetFullAppName("Executive Dashboard");
-            doc = global.OpenDocAsync(appName).Result;
+            //doc = global.OpenDocAsync(appName).Result;
 
             // TODO fix CreateSessionAppAsync
-            //doc = global.CreateSessionAppAsync<JToken>();
+            doc = global.CreateSessionAppAsync().Result;
         }
 
         [Fact]
@@ -51,6 +52,25 @@ namespace tests
         {
             Assert.Equal("42", await doc.EvaluateAsync("=40+2"));
         }
+
+        //[Fact]
+        //async Task Doc_Changed()
+        //{
+        //    bool changed = false;
+        //    void Doc_Changed1(object sender, EventArgs e)
+        //    {
+        //        changed = true;
+        //    }
+
+        //    Assert.False(changed);
+        //    doc.Changed += Doc_Changed1;
+        //    await doc.SetScriptAsync(Guid.NewGuid().ToString());
+        //    await Task.Delay(5000);
+        //    Assert.True(changed);
+        //    doc.Changed -= Doc_Changed1;
+        //}
+
+
 
         //[Fact]
         //public async Task ReloadTest()
