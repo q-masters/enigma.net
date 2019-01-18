@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="ImpromptuInterface" Version="7.0.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="qlik-engineapi" Version="0.3.0-alpha0003" />    
   </ItemGroup>
 

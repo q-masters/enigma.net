@@ -1,9 +1,6 @@
 ﻿namespace enigma
 {
     #region Usings
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using Newtonsoft.Json.Serialization;
     using System;
     using System.Collections.Generic;
     using System.Dynamic;
@@ -11,6 +8,9 @@
     using System.Threading;
     using System.Threading.Tasks;
     using ImpromptuInterface;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
     #endregion
 
     #region ObjectResult
@@ -25,7 +25,7 @@
 
         public string QGenericType { get; set; } = "";
         public string QGenericId { get; set; } = "";
-    } 
+    }
     #endregion
 
     #region GeneratedAPIResult
@@ -56,7 +56,7 @@
         #region Dynamic Methods
 #pragma warning disable 1591 // no XML Comment Warning for override
         public override bool TryConvert(ConvertBinder binder, out object result)
-        {            
+        {
             Type gArgs = binder.ReturnType.GetGenericArguments().FirstOrDefault();
             bool tryDynamicResult = false;
             if (gArgs == typeof(object))
@@ -68,7 +68,7 @@
             if (!gArgs.IsAssignableFrom(typeof(JToken)))
             {
                 var tcs = new TaskCompletionSource(gArgs);
-                           
+
                 input.ContinueWith((message) =>
                 {
                     if (message.IsCanceled)
@@ -80,7 +80,7 @@
                     {
                         tcs.SetException(message.Exception);
                         return;
-                    }               
+                    }
 
                     var qReturn = message?.Result?.SelectToken("qReturn");
                     if (qReturn != null && qReturn.Type == JTokenType.Object && qReturn["qHandle"] != null)
@@ -92,7 +92,7 @@
                             try
                             {
                                 var objectResult = qReturn.ToObject<ObjectResult>();
-                                var newObj = new GeneratedAPI(objectResult, session, gArgs);                                                                
+                                var newObj = new GeneratedAPI(objectResult, session, gArgs);
                                 session.GeneratedApiObjects.TryAdd(objectResult.QHandle, new WeakReference<GeneratedAPI>(newObj));
                                 tcs.SetResult(newObj.ProxyClass);
                             }
@@ -108,7 +108,7 @@
                         {
                             object newRes = null;
                             JToken resultToken = null;
-                            
+
                             var results = message.Result.Children().ToList();
                             if (results.Count == 1)
                             {
@@ -157,7 +157,7 @@
 #pragma warning restore 1591
 
         #endregion
-    } 
+    }
     #endregion
 
     #region GeneratedAPI
@@ -230,12 +230,12 @@
 
         #region Constructor
         /// <summary>
-        /// Construct GeneratedAPI Class 
+        /// Construct GeneratedAPI Class
         /// </summary>
         /// <param name="objectResult">The properties for this Generated API Object</param>
         /// <param name="session">The current enigma Session for this Generated API Object</param>
         /// <param name="proxyType">Optional a proxyType</param>
-        internal GeneratedAPI(ObjectResult objectResult, Session session, Type proxyType= null)
+        internal GeneratedAPI(ObjectResult objectResult, Session session, Type proxyType = null)
         {
             this.qGenericId = objectResult.QGenericId;
             this.qType = objectResult.QType;
@@ -244,15 +244,15 @@
             this.Session = session;
 
             if (proxyType != null)
-            {               
+            {
                 this.ProxyClass = Impromptu.DynamicActLike(this, proxyType);
             }
             else
                 this.ProxyClass = null;
-        }        
+        }
         #endregion
 
-        #region Dynamic Methods        
+        #region Dynamic Methods
 #pragma warning disable 1591 // no XML Comment Warning for override
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
@@ -264,11 +264,11 @@
 
             var argList = args.ToList();
             var ctsArg = argList.OfType<CancellationToken>().ToList();
-            CancellationToken cts= ctsArg.SingleOrDefault();
+            CancellationToken cts = ctsArg.SingleOrDefault();
 
             JToken jToken = null;
 
-            if (args.Length == 1 || (args.Length==2 && (ctsArg.Count == 1 || args[1] == null)))
+            if (args.Length == 1 || (args.Length == 2 && (ctsArg.Count == 1 || args[1] == null)))
             {
                 // special case one real argument beside CancellationToken
                 // check for string or JToken
@@ -300,7 +300,7 @@
 
                     if (item == null)
                         break;
-                    
+
                     var oo = JsonConvert.SerializeObject(item,
                           Newtonsoft.Json.Formatting.None,
                           new JsonSerializerSettings
@@ -312,18 +312,18 @@
                 jToken = jArray;
             }
 
-            // ToDo: enhance parametercheck for enigma Parametermode with loaded schema file                      
+            // ToDo: enhance parametercheck for enigma Parametermode with loaded schema file
             var request = new JsonRpcGeneratedAPIRequestMessage
             {
                 Handle = this.qHandle,
                 Method = binder.Name
             };
             if (request.Method.EndsWith("Async"))
-                request.Method=request.Method.Substring(0, request.Method.Length - 5);
+                request.Method = request.Method.Substring(0, request.Method.Length - 5);
 
             if (Char.IsLower(request.Method[0]))
             {
-                request.Method = char.ToUpper(request.Method[0])+ request.Method.Substring(1);
+                request.Method = char.ToUpper(request.Method[0]) + request.Method.Substring(1);
             }
             request.Parameters = jToken ?? JToken.Parse("{}");
             result = new GeneratedAPIResult(Session?.SendAsync(request, cts), Session);

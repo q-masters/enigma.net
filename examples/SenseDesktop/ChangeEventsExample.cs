@@ -16,9 +16,9 @@ namespace SenseDesktop
         public ChangeEventsExample(IDoc app) : base(app)
         {
             app?.GetAppLayoutAsync()
-               .ContinueWith(async t =>
+               .ContinueWith(t =>
                {
-                   #region Handle AlternateStates                 
+                   #region Handle AlternateStates
                    var res = t.Result;
                    if (res != null)
                    {

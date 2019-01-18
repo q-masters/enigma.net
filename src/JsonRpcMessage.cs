@@ -1,5 +1,5 @@
 ﻿namespace enigma
-{   
+{
     #region Usings
     using System;
     using System.Collections.Generic;
@@ -10,8 +10,11 @@
     #endregion
 
     #region JsonRpcRequestMessage
+    /// <summary>
+    /// A JsonRpc RequestMessage
+    /// </summary>
     [JsonObject(MemberSerialization.OptIn)]
-    internal class JsonRpcRequestMessage
+    public class JsonRpcRequestMessage
     {
         #region Constructor
         internal JsonRpcRequestMessage()
@@ -21,15 +24,27 @@
         #endregion
 
         #region Properties
+        /// <summary>
+        /// The Rpc Version of the Call
+        /// </summary>
         [JsonProperty("jsonrpc")]
         public string JsonRpcVersion { get; private set; }
 
+        /// <summary>
+        /// The name of the called Method
+        /// </summary>
         [JsonProperty("method")]
         public string Method { get; set; }
 
+        /// <summary>
+        /// The params of the called Method
+        /// </summary>
         [JsonProperty("params")]
         public JToken Parameters { get; set; }
 
+        /// <summary>
+        /// The id of the call to return an possible response with the same id.
+        /// </summary>
         [JsonProperty("id", Order = 1)]
         public int Id { get; set; }
         #endregion
@@ -83,6 +98,6 @@
         [JsonProperty("closed")]
         public List<int> Closed { get; set; }
         #endregion
-    } 
+    }
     #endregion
 }

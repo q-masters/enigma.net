@@ -1,5 +1,8 @@
 ﻿namespace enigma
 {
+    /// <summary>
+    /// Defines Options for the Protocoll
+    /// </summary>
     public interface IProtocoll
     {
         /// <summary>
