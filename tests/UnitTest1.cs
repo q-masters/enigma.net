@@ -53,6 +53,21 @@ namespace tests
             Assert.Equal("42", await doc.EvaluateAsync("=40+2"));
         }
 
+        [Fact]
+        async Task Doc_BigEvaluate()
+        {
+            var taskList = new List<Task>();
+            Parallel.For(1, 1000, index =>
+            {
+                var number1 = new Random().Next(0, 10000);
+                var number2 = new Random().Next(0, 10000);
+                var task = doc.EvaluateExAsync($"{number1}+{number2}");
+                taskList.Add(task);
+            });
+
+            await Task.WhenAll(taskList.ToArray());
+        }
+
         //[Fact]
         //async Task Doc_Changed()
         //{
