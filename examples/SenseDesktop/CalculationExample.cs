@@ -1,10 +1,10 @@
-﻿using NLog;
-using Qlik.EngineAPI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NLog;
+using Qlik.EngineAPI;
 
 namespace SenseDesktop
 {
@@ -34,7 +34,7 @@ namespace SenseDesktop
                 Task.WaitAll(taskList.ToArray());
             }
             catch (Exception ex)
-            {                
+            {
                 logger.Error(ex, $"***** The method {nameof(CalcRandom)} was failed.", ex);
             }
         }
