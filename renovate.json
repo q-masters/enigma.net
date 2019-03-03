@@ -1,5 +1,12 @@
 {
-  "extends": [
-    "config:base"
-  ]
+    "assignees": ["konne"],
+    "automerge": false,
+    "baseBranches": [
+      "development"
+    ],
+    "extends": [
+      "config:base"
+    ],
+    "schedule": "before 10am",
+    "timezone": "Europe/Berlin"
 }
