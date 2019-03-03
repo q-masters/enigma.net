@@ -1,0 +1,15 @@
+{
+    "assignees": ["konne"],
+    "automerge": false,
+    "baseBranches": [
+      "development"
+    ],
+    "extends": [
+      "config:base"
+    ],
+    "travis": {
+       "enabled": true
+    },
+    "schedule": "before 10am",
+    "timezone": "Europe/Berlin"
+}
