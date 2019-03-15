@@ -14,6 +14,7 @@ namespace tests
     public class UnitTest1
     {
         IGlobal global;
+        dynamic dynamicGlobal;
         IDoc doc;
 
         public UnitTest1()
@@ -24,13 +25,9 @@ namespace tests
             });
 
             // connect to the engine
-            var globalTask = session.OpenAsync().Result;
-            global = Impromptu.ActLike<IGlobal>(globalTask);
+            dynamicGlobal = session.OpenAsync().Result;
+            global = Impromptu.ActLike<IGlobal>(dynamicGlobal);
 
-            var appName = SenseUtilities.GetFullAppName("Executive Dashboard");
-            //doc = global.OpenDocAsync(appName).Result;
-
-            // TODO fix CreateSessionAppAsync
             doc = global.CreateSessionAppAsync().Result;
         }
 
@@ -38,7 +35,16 @@ namespace tests
         public async Task Global_EngineVersion()
         {
             var engineVersion = await global.EngineVersionAsync();
-            Assert.Equal("12", engineVersion.qComponentVersion.Substring(0, 2));
+            string version = engineVersion.qComponentVersion;
+            Assert.Equal("12", version.Substring(0, 2));
+        }
+
+        [Fact]
+        public async Task DynamicGlobal_EngineVersion()
+        {
+            dynamic engineVersion = await (Task<JObject>)dynamicGlobal.EngineVersionAsync();
+            string version = engineVersion.qComponentVersion;
+            Assert.Equal("12", version.Substring(0, 2));
         }
 
         [Fact]
