@@ -91,4 +91,4 @@ There are currently no conventions on how to format commit messages. We'd like y
 
 ## <a name="cla"></a> Signing the CLA
 
-We need you to sign our Contributor License Agreement (CLA) before we can accept your Pull Request. Visit this link for more information: https://github.com/q2g/open-source/blob/master/sign-cla.md.
+We need you to sign our Contributor License Agreement (CLA) before we can accept your Pull Request. Visit this link for more information: [![CLA assistant](https://cla-assistant.io/readme/badge/q2g/enigma.net)](https://cla-assistant.io/q2g/enigma.net)

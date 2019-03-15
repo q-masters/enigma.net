@@ -3,6 +3,7 @@
 # enigma.net
 [![CodeFactor](https://www.codefactor.io/repository/github/q2g/enigma.net/badge)](https://www.codefactor.io/repository/github/q2g/enigma.net)
 [![travis](https://travis-ci.com/q2g/enigma.net.svg?branch=master)](https://travis-ci.com/q2g/enigma.net/)
+[![CLA assistant](https://cla-assistant.io/readme/badge/q2g/enigma.net)](https://cla-assistant.io/q2g/enigma.net)
 [![Nuget](https://img.shields.io/nuget/v/enigma.net.svg)](https://www.nuget.org/packages/enigma.net)
 
 enigma.net is a library that helps you communicate with a Qlik Associative Engine.
