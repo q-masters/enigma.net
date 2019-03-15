@@ -6,8 +6,8 @@ services:
   - docker
 
 before_install:
-- docker pull qlikcore/engine:12.321.0
-- docker run -d -p 127.0.0.1:4848:9076 qlikcore/engine:12.321.0 -S AcceptEULA=yes
+- docker pull qlikcore/engine:12.329.0
+- docker run -d -p 127.0.0.1:4848:9076 qlikcore/engine:12.329.0 -S AcceptEULA=yes
 - docker ps -a
 
 script:
