@@ -54,7 +54,7 @@ jobs:
 
     - task: NuGetCommand@2
       inputs:
-        restoreSolution: 'tests/test.sl'
+        restoreSolution: 'tests/test.sln'
 
     - task: VSBuild@1
       inputs:
