@@ -54,11 +54,11 @@ jobs:
 
     - task: NuGetCommand@2
       inputs:
-        restoreSolution: 'tests/test.sln'
+        restoreSolution: 'tests/tests.sln'
 
     - task: VSBuild@1
       inputs:
-        solution: 'tests/test.sln'
+        solution: 'tests/tests.sln'
         #platform: ''
         configuration: 'Debug'
 
