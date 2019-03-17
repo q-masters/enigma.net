@@ -2,9 +2,10 @@
 
 	<PropertyGroup>
 		<TargetFramework>netcoreapp2.1</TargetFramework>
-		<RuntimeFrameworkVersion>2.1.5</RuntimeFrameworkVersion>
+		<!--<RuntimeFrameworkVersion>2.1.5</RuntimeFrameworkVersion>-->
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
+		<TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -12,7 +13,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Microsoft.NETCore.App" Version="2.1.0" />
+		<!--<PackageReference Update="Microsoft.NETCore.App" Version="2.1.0" />-->
 		<PackageReference Include="ImpromptuInterface" Version="7.0.1" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.0-preview-20181205-02" />
 		<PackageReference Include="qlik-engineapi" Version="0.3.0-alpha0015" />
