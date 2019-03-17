@@ -2,7 +2,7 @@
 	<Choose>
 		<When Condition="'$(MSBuildRuntimeType)' == 'Core'">
 			<PropertyGroup>
-				<TargetFramework>netcoreapp2.1</TargetFramework>				
+				<TargetFramework>netcoreapp2.1</TargetFramework>
 			</PropertyGroup>
 		</When>
 		<Otherwise>
@@ -21,7 +21,7 @@
 		<RepositoryUrl>https://github.com/q2g/enigma.net</RepositoryUrl>
 		<AssemblyName>enigma.net</AssemblyName>
 		<RootNamespace>enigma</RootNamespace>
-
+		<TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
 		<Description>Automated Classes for the Qlik EngineAPI</Description>
 		<!--<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>-->
 		<PackageReleaseNotes></PackageReleaseNotes>
