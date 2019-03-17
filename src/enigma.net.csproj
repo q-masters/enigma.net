@@ -2,7 +2,7 @@
 	<Choose>
 		<When Condition="'$(MSBuildRuntimeType)' == 'Core'">
 			<PropertyGroup>
-				<TargetFramework>netcoreapp2.1</TargetFramework>
+				<TargetFramework>netcoreapp2.1</TargetFramework>				
 			</PropertyGroup>
 		</When>
 		<Otherwise>
