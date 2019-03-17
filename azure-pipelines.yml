@@ -50,6 +50,11 @@ jobs:
     vmImage: 'vs2017-win2016'
 
   steps:
+    - task: DotNetCoreInstaller@0
+      inputs:
+         packageType: sdk
+         version: 2.2.105
+
     - task: NuGetToolInstaller@0
 
     - task: NuGetCommand@2
