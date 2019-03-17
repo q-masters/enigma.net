@@ -1,6 +1,9 @@
 trigger:
 - master
 
+variables:
+  buildConfiguration: 'Release'
+
 jobs:
 - job: Linux
   pool:
@@ -56,25 +59,17 @@ jobs:
          version: 2.2.105
 
     - task: DotNetCoreCLI@2
-      displayName: 'dotnet test $(buildConfiguration)'
+      displayName: 'dotnet restore $(buildConfiguration)'
       inputs:
         command: restore
-        projects: '**/*tests/*.csproj'         
+        projects: '**/*tests/*.csproj'
 
-#    - task: NuGetToolInstaller@0       
-
-#    - task: NuGetCommand@2
-#      inputs:
-#       restoreSolution: 'tests/tests.sln'
-
-#    - task: DotNetCoreCLI@2
-#      inputs:
-#        command: 'restore'
-#    - task: CmdLine@2      
-#      inputs:
-#        script: |
-#          cd tests
-#          dotnet restore
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet build $(buildConfiguration)'
+      inputs:
+        command: build
+        projects: '**/*tests/*.csproj'
+        arguments: '--configuration $(buildConfiguration)
 
 #    - task: MSBuild@1
 #      inputs:
