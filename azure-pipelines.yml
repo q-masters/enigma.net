@@ -61,9 +61,11 @@ jobs:
       inputs:
        restoreSolution: 'tests/tests.sln'
 
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: 'restore'        
+#    - task: DotNetCoreCLI@2
+#      inputs:
+#        command: 'restore'
+
+    - script: dotnet restore --configuration Debug 
 
     - task: MSBuild@1
       inputs:
