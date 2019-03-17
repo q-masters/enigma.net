@@ -64,9 +64,9 @@ jobs:
 #    - task: DotNetCoreCLI@2
 #      inputs:
 #        command: 'restore'
-    - task: CmdLine@2
+    - task: CmdLine@2      
       inputs:
-        script:
+        script: |
           cd tests
           dotnet restore
 
