@@ -55,6 +55,12 @@ jobs:
          packageType: sdk
          version: 2.2.105
 
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet test $(buildConfiguration)'
+      inputs:
+        command: restore
+        projects: '**/*tests/*.csproj'         
+
 #    - task: NuGetToolInstaller@0       
 
 #    - task: NuGetCommand@2
@@ -64,17 +70,17 @@ jobs:
 #    - task: DotNetCoreCLI@2
 #      inputs:
 #        command: 'restore'
-    - task: CmdLine@2      
-      inputs:
-        script: |
-          cd tests
-          dotnet restore
+#    - task: CmdLine@2      
+#      inputs:
+#        script: |
+#          cd tests
+#          dotnet restore
 
-    - task: MSBuild@1
-      inputs:
-        solution: 'tests/tests.sln'
-        #platform: ''
-        configuration: 'Debug'        
+#    - task: MSBuild@1
+#      inputs:
+#        solution: 'tests/tests.sln'
+#        #platform: ''
+#        configuration: 'Debug'        
 
     #solution: '**\*.sln' 
     #vsVersion: 'latest' # Optional. Options: latest, 16.0, 15.0, 14.0, 12.0, 11.0
