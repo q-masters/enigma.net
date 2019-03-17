@@ -50,17 +50,23 @@ jobs:
     vmImage: 'vs2017-win2016'
 
   steps:
-    - task: NuGetToolInstaller@0
+    - task: DotNetCoreInstaller@0
+      inputs:
+         packageType: sdk
+         version: 2.2.105
+
+    - task: NuGetToolInstaller@0       
 
     - task: NuGetCommand@2
       inputs:
-        restoreSolution: 'tests/tests.sln'
+       restoreSolution: 'tests/tests.sln'
 
-    - task: VSBuild@1
+
+    - task: MSBuild@1
       inputs:
         solution: 'tests/tests.sln'
         #platform: ''
-        configuration: 'Debug'
+        configuration: 'Debug'        
 
     #solution: '**\*.sln' 
     #vsVersion: 'latest' # Optional. Options: latest, 16.0, 15.0, 14.0, 12.0, 11.0
