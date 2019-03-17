@@ -55,11 +55,11 @@ jobs:
          packageType: sdk
          version: 2.2.105
 
-    - task: NuGetToolInstaller@0       
+#    - task: NuGetToolInstaller@0       
 
-    - task: NuGetCommand@2
-      inputs:
-       restoreSolution: 'tests/tests.sln'
+#    - task: NuGetCommand@2
+#      inputs:
+#       restoreSolution: 'tests/tests.sln'
 
 #    - task: DotNetCoreCLI@2
 #      inputs:
