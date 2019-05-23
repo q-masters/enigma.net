@@ -86,7 +86,7 @@
         public IProtocoll Protocol { get; set; } = new Protocoll();
         #endregion
 
-        internal Task<ClientWebSocket> CreateSocketCall(CancellationToken ct)
+        internal Task<WebSocket> CreateSocketCall(CancellationToken ct)
         {
             var internalCreateSocket = CreateSocket;
             if (internalCreateSocket == null)
