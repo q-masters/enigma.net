@@ -46,7 +46,7 @@
         /// <summary>
         /// A function to use when instantiating the WebSocket
         /// </summary>
-        public Func<string, Task<ClientWebSocket>> CreateSocket { get; set; }
+        public Func<string, Task<WebSocket>> CreateSocket { get; set; }
 
         ///// <summary>
         ///// Add later to enable Promise with then, instead of Tasks
