@@ -38,15 +38,27 @@
         /// </summary>
         public JsonToken Schema { get; set; }
 
+        private string url;
         /// <summary>
         /// String containing a proper websocket URL to QIX Engine.
-        /// </summary>
-        public string Url { get; set; }
+        /// </summary>        
+        public string Url
+        {
+            get { return url; }
+            set {
+                if (value != url)
+                {
+                    url = value;
+                    if (url.ToLowerInvariant().StartsWith("http"))
+                        url = "ws" + url.Substring(4);
+                }
+            }
+        }
 
         /// <summary>
         /// A function to use when instantiating the WebSocket
         /// </summary>
-        public Func<string, Task<ClientWebSocket>> CreateSocket { get; set; }
+        public Func<string, Task<WebSocket>> CreateSocket { get; set; }
 
         ///// <summary>
         ///// Add later to enable Promise with then, instead of Tasks

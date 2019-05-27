@@ -384,18 +384,26 @@
                         {
                             var responseMessage = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(message);
 
-                            if (responseMessage != null && (responseMessage.Result != null || responseMessage.Error != null))
+                            if (responseMessage != null && 
+                                    ( responseMessage.Result != null 
+                                   || responseMessage.Error != null
+                                   || responseMessage.Change?.Count > 0
+                                   || responseMessage.Closed?.Count > 0
+                                   ))
                             {
-                                OpenRequests.TryRemove(responseMessage.Id, out var tcs);
-                                if (responseMessage.Error != null)
+                                if (responseMessage.Id != null)
                                 {
-                                    tcs?.SetException(new Exception(responseMessage.Error?.ToString()));
+                                    OpenRequests.TryRemove(responseMessage.Id.Value, out var tcs);
+                                    if (responseMessage.Error != null)
+                                    {
+                                        tcs?.SetException(new Exception(responseMessage.Error?.ToString()));
+                                    }
+                                    else
+                                        tcs?.SetResult(responseMessage.Result);
                                 }
-                                else
-                                    tcs?.SetResult(responseMessage.Result);
 
                                 #region Notify Changed or Closed API Objects
-                                if (responseMessage?.Change != null)
+                                if (responseMessage.Change != null)
                                 {
                                     foreach (var item in responseMessage.Change)
                                     {
@@ -405,7 +413,7 @@
                                     }
                                 }
 
-                                if (responseMessage?.Closed != null)
+                                if (responseMessage.Closed != null)
                                 {
                                     foreach (var item in responseMessage.Closed)
                                     {
