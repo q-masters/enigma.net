@@ -61,7 +61,7 @@
 
 		<PackageReference Include="ImpromptuInterface" Version="7.0.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
-		<PackageReference Include="NLog" Version="4.5.11" />
+		<PackageReference Include="NLog" Version="4.6.4" />
 
 		<PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" Condition="'$(noGitVersionTask)' == ''" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />
