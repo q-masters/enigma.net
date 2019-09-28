@@ -1,4 +1,14 @@
 {
+  "packageRules": [
+    {
+      "packagePatterns": ["^Newtonsoft"],
+      "enabled": false
+    },
+    {
+      "packagePatterns": ["^NLog"],
+      "enabled": false
+    }
+  ],
     "assignees": ["konne"],
     "automerge": false,
     "baseBranches": [
@@ -7,9 +17,10 @@
     "extends": [
       "config:base"
     ],
-    "travis": {
-       "enabled": true
+    "docker": {
+      "enabled": true
     },
-    "schedule": "before 10am",
-    "timezone": "Europe/Berlin"
+    "docker-compose": {
+      "enabled": true
+    }
 }
