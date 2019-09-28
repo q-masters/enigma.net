@@ -12,7 +12,7 @@ jobs:
     - name: Run a one-line script
       run: |
         cd tests
-        docker-compose up
+        docker-compose up -d
         dotnet restore
         dotnet test
         docker-compose down
