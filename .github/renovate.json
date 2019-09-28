@@ -1,0 +1,26 @@
+{
+  "packageRules": [
+    {
+      "packagePatterns": ["^Newtonsoft"],
+      "enabled": false
+    },
+    {
+      "packagePatterns": ["^NLog"],
+      "enabled": false
+    }
+  ],
+    "assignees": ["konne"],
+    "automerge": false,
+    "baseBranches": [
+      "development"
+    ],
+    "extends": [
+      "config:base"
+    ],
+    "docker": {
+      "enabled": true
+    },
+    "docker-compose": {
+      "enabled": true
+    }
+}
