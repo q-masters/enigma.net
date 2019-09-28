@@ -1,7 +1,7 @@
 ![](imgs/enigma.png)
 
 # enigma.net
-[![CodeFactor](https://www.codefactor.io/repository/github/q2g/enigma.net/badge)](https://www.codefactor.io/repository/github/q2g/enigma.net)
+[![CodeFactor](https://www.codefactor.io/repository/github/konne/enigma.net/badge)](https://www.codefactor.io/repository/github/konne/enigma.net)
 [![CLA assistant](https://cla-assistant.io/readme/badge/q2g/enigma.net)](https://cla-assistant.io/q2g/enigma.net)
 [![Nuget](https://img.shields.io/nuget/v/enigma.net.svg)](https://www.nuget.org/packages/enigma.net)
 
