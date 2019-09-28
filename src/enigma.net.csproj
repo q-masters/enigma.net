@@ -17,8 +17,8 @@
 		<Company>q2g</Company>
 		<Product>enigma.net</Product>
 		<Authors>Konrad Mattheis &amp; Martin Berthold</Authors>
-		<PackageProjectUrl>https://github.com/q2g/enigma.net</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/q2g/enigma.net</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/konne/enigma.net</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/konne/enigma.net</RepositoryUrl>
 		<AssemblyName>enigma.net</AssemblyName>
 		<RootNamespace>enigma</RootNamespace>
 
