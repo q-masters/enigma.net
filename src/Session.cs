@@ -29,7 +29,7 @@
         private ConcurrentDictionary<int, TaskCompletionSource<JToken>> OpenRequests = new ConcurrentDictionary<int, TaskCompletionSource<JToken>>();
         private ConcurrentQueue<SendRequest> OpenSendRequest = new ConcurrentQueue<SendRequest>();
 
-        private ClientWebSocket socket = null;
+        private WebSocket socket = null;
 
         private EnigmaConfigurations config;
 
@@ -144,7 +144,7 @@
 
             CancellationToken ct = ctn ?? CancellationToken.None;
 
-            socket = await config.CreateSocketCall(ct);
+            socket = await config.CreateSocketCall(ct).ConfigureAwait(false);
 
             // Todo add here the global Cancelation Token that is
             // triggered from the CloseAsync
@@ -241,7 +241,7 @@
         #endregion
 
         #region SendAsync
-        internal async Task<JToken> SendAsync(JsonRpcRequestMessage request, CancellationToken ct)
+        internal Task<JToken> SendAsync(JsonRpcRequestMessage request, CancellationToken ct)
         {
             var tcs = new TaskCompletionSource<JToken>();
             try
@@ -273,7 +273,7 @@
                 tcs.SetException(ex);
             }
 
-            return await tcs.Task;
+            return tcs.Task;
         }
         #endregion
 
@@ -333,14 +333,17 @@
                 #region Helper to Notify API Objects
                 void notifyGeneratedAPI(WeakReference<GeneratedAPI> wrGeneratedAPI, bool close)
                 {
+                    Console.WriteLine("notifyGeneratedAPI");
                     GeneratedAPI generatedAPI = null;
                     wrGeneratedAPI?.TryGetTarget(out generatedAPI);
                     if (generatedAPI != null)
                     {
+                        Console.WriteLine("notifyGeneratedAPI - genAPI");
                         _ = Task.Run(() =>
                         {
                             try
                             {
+                                Console.WriteLine("notifyGeneratedAPI - RUN");
                                 if (close)
                                     generatedAPI?.OnClosed();
                                 else
@@ -350,7 +353,7 @@
                             {
                                 logger.Error(ex);
                             }
-                        });
+                        }).ConfigureAwait(false);
                     }
                 }
                 #endregion
@@ -363,7 +366,7 @@
                         WebSocketReceiveResult result;
                         do
                         {
-                            result = await socket.ReceiveAsync(writeSegment, cancellationToken);
+                            result = await socket.ReceiveAsync(writeSegment, cancellationToken).ConfigureAwait(false);
                             writeSegment = new ArraySegment<byte>(buffer, writeSegment.Offset + result.Count, writeSegment.Count - result.Count);
 
                             // check buffer overflow
@@ -381,18 +384,26 @@
                         {
                             var responseMessage = JsonConvert.DeserializeObject<JsonRpcGeneratedAPIResponseMessage>(message);
 
-                            if (responseMessage != null && (responseMessage.Result != null || responseMessage.Error != null))
+                            if (responseMessage != null && 
+                                    ( responseMessage.Result != null 
+                                   || responseMessage.Error != null
+                                   || responseMessage.Change?.Count > 0
+                                   || responseMessage.Closed?.Count > 0
+                                   ))
                             {
-                                OpenRequests.TryRemove(responseMessage.Id, out var tcs);
-                                if (responseMessage.Error != null)
+                                if (responseMessage.Id != null)
                                 {
-                                    tcs?.SetException(new Exception(responseMessage.Error?.ToString()));
+                                    OpenRequests.TryRemove(responseMessage.Id.Value, out var tcs);
+                                    if (responseMessage.Error != null)
+                                    {
+                                        tcs?.SetException(new Exception(responseMessage.Error?.ToString()));
+                                    }
+                                    else
+                                        tcs?.SetResult(responseMessage.Result);
                                 }
-                                else
-                                    tcs?.SetResult(responseMessage.Result);
 
                                 #region Notify Changed or Closed API Objects
-                                if (responseMessage?.Change != null)
+                                if (responseMessage.Change != null)
                                 {
                                     foreach (var item in responseMessage.Change)
                                     {
@@ -402,7 +413,7 @@
                                     }
                                 }
 
-                                if (responseMessage?.Closed != null)
+                                if (responseMessage.Closed != null)
                                 {
                                     foreach (var item in responseMessage.Closed)
                                     {
