@@ -4,17 +4,17 @@ on: [push, pull_request]
 
 jobs:
   build:
-
+    name: test against qlik-core
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v1
     - name: Run a one-line script
       run: |
-        echo Hello, world!
         cd tests
         docker-compose up
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+        dotnet restore
+        dotnet test
+        docker-compose down
+
+
