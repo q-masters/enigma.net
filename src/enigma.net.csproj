@@ -58,12 +58,10 @@
 
 	<ItemGroup>
 		<Reference Include="System.Web" />
-
 		<PackageReference Include="ImpromptuInterface" Version="7.0.1" />
-		<PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+		<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
 		<PackageReference Include="NLog" Version="4.7.0" />
-
-		<PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" Condition="'$(noGitVersionTask)' == ''" />
+		<PackageReference Include="GitVersionTask" Version="5.2.4" PrivateAssets="All" Condition="'$(noGitVersionTask)' == ''" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19270-01" PrivateAssets="All" />
 	</ItemGroup>
 
