@@ -12,6 +12,7 @@ jobs:
     - name: Run a one-line script
       run: |
         cd tests
+        docker build --tag qlikcoreengine:latest dependabot/.
         docker-compose up -d
         dotnet restore
         dotnet test
