@@ -1,0 +1,14 @@
+version: 1
+update_configs:
+  - package_manager: "dotnet:nuget"
+    directory: "/src"
+    update_schedule: "live"
+    target_branch: "development"
+  - package_manager: "dotnet:nuget"
+    directory: "/tests"
+    update_schedule: "live"
+    target_branch: "development"
+  - package_manager: "docker"
+    directory: "/tests/dependabot/"
+    update_schedule: "daily"    
+    target_branch: "development"
