@@ -9,6 +9,6 @@ update_configs:
     update_schedule: "live"
     target_branch: "development"
   - package_manager: "docker"
-    directory: "/tests"
+    directory: "/tests/dependabot/"
     update_schedule: "daily"    
     target_branch: "development"
