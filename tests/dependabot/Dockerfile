@@ -3,4 +3,4 @@
 
 # Dummy docker image to trigger dependabot PRs
 
-FROM qlikcore/engine:12.961.0
+FROM qlikcore/engine:12.1050.0
