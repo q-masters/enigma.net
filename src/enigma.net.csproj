@@ -62,7 +62,7 @@
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="NLog" Version="4.7.12" />
 		<PackageReference Include="GitVersionTask" Version="5.5.1" PrivateAssets="All" Condition="'$(noGitVersionTask)' == ''" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
 
 	<Target Name="FixOnGitVersionTaskError" BeforeTargets="GetAssemblyVersion">
