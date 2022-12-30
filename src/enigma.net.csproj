@@ -60,7 +60,7 @@
 		<Reference Include="System.Web" />
 		<PackageReference Include="ImpromptuInterface" Version="7.0.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="NLog" Version="4.7.12" />
+		<PackageReference Include="NLog" Version="5.1.1" />
 		<PackageReference Include="GitVersionTask" Version="5.5.1" PrivateAssets="All" Condition="'$(noGitVersionTask)' == ''" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 	</ItemGroup>
